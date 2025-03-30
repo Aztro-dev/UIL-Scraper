@@ -1,5 +1,6 @@
 use minreq::Response;
 
+#[derive(Clone)]
 pub struct UILFields {
     pub district: Option<u8>,
     pub region: Option<u8>,
@@ -52,6 +53,7 @@ pub fn request(fields: UILFields) -> Option<String> {
     Some(response.as_str().ok()?.to_string())
 }
 #[allow(dead_code)]
+#[derive(Clone)]
 pub enum Subject {
     Accounting,
     /// No longer competed in
