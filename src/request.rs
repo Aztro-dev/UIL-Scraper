@@ -1,7 +1,10 @@
 use minreq::Response;
+use scraper::{Html, Selector};
+
+use crate::{individual::Individual, team::Team};
 
 #[derive(Clone)]
-pub struct UILFields {
+pub struct RequestFields {
     pub district: Option<u8>,
     pub region: Option<u8>,
     pub state: Option<u8>,
@@ -10,7 +13,18 @@ pub struct UILFields {
     pub year: u16,
 }
 
-impl UILFields {
+impl RequestFields {
+    pub fn parse_conference(string: String) -> Option<u8> {
+        match string.as_str() {
+            "1A" | "1a" | "1" => Some(1),
+            "2A" | "2a" | "2" => Some(2),
+            "3A" | "3a" | "3" => Some(3),
+            "4A" | "4a" | "4" => Some(4),
+            "5A" | "5a" | "5" => Some(5),
+            "6A" | "6a" | "6" => Some(6),
+            _ => None,
+        }
+    }
     fn get_district(&self) -> String {
         if self.district.is_none() {
             String::new()
@@ -29,12 +43,12 @@ impl UILFields {
         if self.state.is_none() {
             String::new()
         } else {
-            self.state.unwrap().to_string()
+            String::from("1")
         }
     }
 }
 
-pub fn request(fields: UILFields) -> Option<String> {
+pub fn request(fields: RequestFields) -> Option<String> {
     let district = fields.get_district();
     let region = fields.get_region();
     let state = fields.get_state();
@@ -52,6 +66,31 @@ pub fn request(fields: UILFields) -> Option<String> {
 
     Some(response.as_str().ok()?.to_string())
 }
+
+pub fn perform_scrape(fields: RequestFields) -> Option<(Vec<Individual>, Vec<Team>)> {
+    let mut individual_results: Vec<Individual> = Vec::new();
+    let mut team_results: Vec<Team> = Vec::new();
+
+    let request = request(fields.clone())?;
+
+    let document = Html::parse_document(request.as_str());
+    let table_selector = Selector::parse("table.ddprint").ok()?;
+    let mut table = document.select(&table_selector);
+    let individual_table = table.next()?;
+
+    let team_table = table.next()?;
+
+    let mut individuals = Individual::parse_table(individual_table, &fields)?;
+
+    individual_results.append(&mut individuals);
+
+    let mut teams = Team::parse_table(team_table, &fields)?;
+
+    team_results.append(&mut teams);
+
+    Some((individual_results, team_results))
+}
+
 #[allow(dead_code)]
 #[derive(Clone)]
 pub enum Subject {
@@ -81,6 +120,22 @@ impl Subject {
             Subject::Mathematics => 10,
             Subject::NumberSense => 11,
             Subject::Science => 12,
+        }
+    }
+
+    pub fn from_str(string: &str) -> Option<Self> {
+        match string {
+            "accounting" => Some(Self::Accounting),
+            "comp_apps" => Some(Self::ComputerApplications),
+            "current_events" => Some(Self::CurrentEvents),
+            "comp_sci" | "cs" => Some(Self::ComputerScience),
+            "calculator" | "calc" => Some(Self::Calculator),
+            "spelling" | "spell" => Some(Self::Spelling),
+            "social_studies" => Some(Self::SocialStudies),
+            "mathematics" | "math" => Some(Self::Mathematics),
+            "number_sense" | "ns" => Some(Self::NumberSense),
+            "science" | "sci" => Some(Self::Science),
+            _ => None,
         }
     }
 }
