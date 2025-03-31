@@ -1,4 +1,4 @@
-use colored::{Color, ColoredString};
+use colored::{Color, ColoredString, Colorize};
 use scraper::{ElementRef, Selector};
 use std::cmp;
 
@@ -8,10 +8,12 @@ use crate::request::{RequestFields, Subject};
 pub enum Team {
     Normal {
         score: i16,
+        conference: u8,
         name: String,
     },
     ComputerScience {
         score: i16,
+        conference: u8,
         prog: Option<i16>,
         name: String,
     },
@@ -20,9 +22,14 @@ pub enum Team {
 impl Team {
     pub fn get_score(&self) -> i16 {
         match *self {
-            Team::Normal { score, name: _ } => score,
+            Team::Normal {
+                score,
+                name: _,
+                conference: _,
+            } => score,
             Team::ComputerScience {
                 score,
+                conference: _,
                 prog: _,
                 name: _,
             } => score,
@@ -30,22 +37,47 @@ impl Team {
     }
     pub fn get_prog(&self) -> Option<i16> {
         match *self {
-            Team::Normal { score: _, name: _ } => None,
+            Team::Normal {
+                score: _,
+                name: _,
+                conference: _,
+            } => None,
             Team::ComputerScience {
                 score: _,
                 prog,
                 name: _,
+                conference: _,
             } => prog,
         }
     }
     pub fn get_name(&self) -> String {
         match self {
-            Team::Normal { score: _, name } => name.clone(),
+            Team::Normal {
+                score: _,
+                name,
+                conference: _,
+            } => name.clone(),
             Team::ComputerScience {
                 score: _,
                 prog: _,
+                conference: _,
                 name,
             } => name.clone(),
+        }
+    }
+    pub fn get_conference(&self) -> u8 {
+        match self {
+            Team::Normal {
+                score: _,
+                name: _,
+                conference,
+            } => *conference,
+            Team::ComputerScience {
+                score: _,
+                prog: _,
+                conference,
+                name: _,
+            } => *conference,
         }
     }
     pub fn parse_table(table: ElementRef, fields: &RequestFields) -> Option<Vec<Self>> {
@@ -88,9 +120,11 @@ impl Team {
                     score: cells[3].parse::<i16>().unwrap_or(0),
                     prog: cells[2].parse::<i16>().ok(),
                     name: school,
+                    conference: fields.clone().conference,
                 },
                 _ => Team::Normal {
                     score: cells[2].parse::<i16>().unwrap_or(0),
+                    conference: fields.clone().conference,
                     name: school,
                 },
             };
@@ -100,7 +134,7 @@ impl Team {
         Some(results)
     }
 
-    pub fn display_results(mut results: Vec<Self>, subject: Subject) {
+    pub fn display_results(mut results: Vec<Self>, _subject: Subject) {
         results.sort_by(|a, b| {
             let a_score = a.get_score();
             let b_score = b.get_score();
@@ -110,6 +144,7 @@ impl Team {
             cmp::min(results.len(), 25),
             Team::Normal {
                 score: 0,
+                conference: 0,
                 name: String::new(),
             },
         );
@@ -119,16 +154,25 @@ impl Team {
                 longest_team_name = team.get_name().len();
             }
         }
-        let score_length = results
-            .get(0)
-            .unwrap()
-            .get_score()
-            .checked_ilog10()
-            .unwrap_or(0) as usize
-            + 1;
+        let first = results.first().unwrap();
+        let score_length = first.get_score().checked_ilog10().unwrap_or(0) as usize + 1;
+        let mut previous_score = results.first().unwrap().get_score();
+        let mut previous_place = 0;
         for (place, team) in results.iter().enumerate() {
             let name = team.get_name();
             let score = team.get_score();
+
+            let place = if score == previous_score {
+                previous_place
+            } else {
+                place
+            };
+
+            if score != previous_score {
+                previous_score = score;
+            }
+
+            previous_place = place;
             let mut base: ColoredString = format!(
                 "{:2} {:longest_team_name$} => {:>score_length$}",
                 place + 1,
@@ -153,23 +197,28 @@ impl Team {
                 _ => base.fgcolor = None,
             };
 
-            match subject {
-                Subject::ComputerScience => {
-                    if let Some(prog) = team.get_prog() {
-                        let prog_length = results
-                            .get(0)
-                            .unwrap()
-                            .get_prog()
-                            .unwrap()
-                            .checked_ilog10()
-                            .unwrap_or(0) as usize
-                            + 1;
-                        base.input = format!("{} (prog {:>prog_length$})", base.input, prog);
-                    }
-                }
-                _ => {}
+            let prog_length = std::cmp::max(
+                first.get_prog().unwrap().checked_ilog10().unwrap_or(0) as usize + 1,
+                "N/A".len(),
+            );
+            if let Some(prog) = team.get_prog() {
+                base.input = format!("{} (prog {:>prog_length$})", base.input, prog);
+            } else {
+                base.input = format!("{} (prog {:prog_length$})", base.input, "N/A");
             }
-            println!("{base}");
+            let conference = team.get_conference();
+
+            let conference_str: ColoredString = match conference {
+                1 => "1A".white(),
+                2 => "2A".yellow(),
+                3 => "3A".bright_blue(),
+                4 => "4A".green(),
+                5 => "5A".red(),
+                6 => "6A".magenta(),
+                _ => "".into(),
+            };
+
+            println!("{base} {conference_str}");
         }
     }
 }

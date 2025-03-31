@@ -14,16 +14,37 @@ pub struct RequestFields {
 }
 
 impl RequestFields {
-    pub fn parse_conference(string: String) -> Option<u8> {
-        match string.as_str() {
-            "1A" | "1a" | "1" => Some(1),
-            "2A" | "2a" | "2" => Some(2),
-            "3A" | "3a" | "3" => Some(3),
-            "4A" | "4a" | "4" => Some(4),
-            "5A" | "5a" | "5" => Some(5),
-            "6A" | "6a" | "6" => Some(6),
-            _ => None,
+    pub fn parse_conference(mut string: String) -> Option<std::ops::Range<u8>> {
+        string = string.to_lowercase();
+        string.retain(|c| c.is_ascii_digit());
+        let bytes = string.as_bytes();
+        // char to u8
+        let left_digit = bytes[0] - 48;
+        if bytes.len() == 1 {
+            if left_digit < 1 {
+                return None;
+            }
+            if left_digit > 6 {
+                return None;
+            }
+            return Some(std::ops::Range {
+                start: left_digit,
+                end: left_digit + 1,
+            });
         }
+        let right_digit = bytes[1] - 48;
+        let start = std::cmp::min(left_digit, right_digit);
+        let end = std::cmp::max(left_digit, right_digit);
+        if start < 1 {
+            return None;
+        }
+        if end > 6 {
+            return None;
+        }
+        Some(std::ops::Range::<u8> {
+            start,
+            end: end + 1,
+        })
     }
     fn get_district(&self) -> String {
         if self.district.is_none() {
@@ -124,7 +145,7 @@ impl Subject {
     }
 
     pub fn from_str(string: &str) -> Option<Self> {
-        match string {
+        match string.to_lowercase().as_str() {
             "accounting" => Some(Self::Accounting),
             "comp_apps" => Some(Self::ComputerApplications),
             "current_events" => Some(Self::CurrentEvents),

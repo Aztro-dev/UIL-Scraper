@@ -1,4 +1,4 @@
-use colored::{Color, ColoredString};
+use colored::{Color, ColoredString, Colorize};
 use scraper::{selectable::Selectable, *};
 use std::cmp;
 
@@ -9,11 +9,13 @@ pub enum Individual {
     Normal {
         name: String,
         school: String,
+        conference: u8,
         score: i16,
     },
     Science {
         name: String,
         school: String,
+        conference: u8,
         score: i16,
         biology: i16,
         chemistry: i16,
@@ -27,11 +29,13 @@ impl Individual {
             Individual::Normal {
                 name: _,
                 school: _,
+                conference: _,
                 score,
             } => score,
             Individual::Science {
                 name: _,
                 school: _,
+                conference: _,
                 score,
                 biology: _,
                 chemistry: _,
@@ -44,11 +48,13 @@ impl Individual {
             Individual::Normal {
                 name,
                 school: _,
+                conference: _,
                 score: _,
             } => name.clone(),
             Individual::Science {
                 name,
                 school: _,
+                conference: _,
                 score: _,
                 biology: _,
                 chemistry: _,
@@ -62,16 +68,37 @@ impl Individual {
             Individual::Normal {
                 name: _,
                 school,
+                conference: _,
                 score: _,
             } => school.clone(),
             Individual::Science {
                 name: _,
                 school,
+                conference: _,
                 score: _,
                 biology: _,
                 chemistry: _,
                 physics: _,
             } => school.clone(),
+        }
+    }
+    pub fn get_conference(&self) -> u8 {
+        match self {
+            Individual::Normal {
+                name: _,
+                school: _,
+                conference,
+                score: _,
+            } => *conference,
+            Individual::Science {
+                name: _,
+                school: _,
+                conference,
+                score: _,
+                biology: _,
+                chemistry: _,
+                physics: _,
+            } => *conference,
         }
     }
 
@@ -81,6 +108,7 @@ impl Individual {
                 name,
                 school,
                 score: _,
+                conference,
                 biology,
                 chemistry: _,
                 physics: _,
@@ -88,6 +116,7 @@ impl Individual {
                 *self = Self::Science {
                     name: name.clone(),
                     school: school.clone(),
+                    conference: *conference,
                     score: *biology,
                     biology: *biology,
                     chemistry: *biology,
@@ -104,6 +133,7 @@ impl Individual {
                 name,
                 school,
                 score: _,
+                conference,
                 biology: _,
                 chemistry,
                 physics: _,
@@ -111,6 +141,7 @@ impl Individual {
                 *self = Self::Science {
                     name: name.clone(),
                     school: school.clone(),
+                    conference: *conference,
                     score: *chemistry,
                     biology: *chemistry,
                     chemistry: *chemistry,
@@ -127,6 +158,7 @@ impl Individual {
                 name,
                 school,
                 score: _,
+                conference,
                 biology: _,
                 chemistry: _,
                 physics,
@@ -135,6 +167,7 @@ impl Individual {
                     name: name.clone(),
                     school: school.clone(),
                     score: *physics,
+                    conference: *conference,
                     biology: *physics,
                     chemistry: *physics,
                     physics: *physics,
@@ -167,6 +200,7 @@ impl Individual {
                 Subject::Science => Individual::Science {
                     name: name.clone(),
                     school: school.clone(),
+                    conference: fields.clone().conference,
                     biology: cells[4].parse::<i16>().unwrap_or(0),
                     chemistry: cells[5].parse::<i16>().unwrap_or(0),
                     physics: cells[6].parse::<i16>().unwrap_or(0),
@@ -175,6 +209,7 @@ impl Individual {
                 _ => Individual::Normal {
                     name: name.clone(),
                     school: school.clone(),
+                    conference: fields.clone().conference,
                     score: cells[4].parse::<i16>().unwrap_or(0),
                 },
             };
@@ -194,6 +229,7 @@ impl Individual {
             cmp::min(results.len(), 25),
             Individual::Normal {
                 score: 0,
+                conference: 1,
                 school: String::new(),
                 name: String::new(),
             },
@@ -208,16 +244,29 @@ impl Individual {
         }
 
         let score_length = results
-            .get(0)
+            .first()
             .unwrap()
             .get_score()
             .checked_ilog10()
             .unwrap_or(0) as usize
             + 1;
 
+        let mut previous_score = results.first().unwrap().get_score();
+        let mut previous_place = 0;
         for (place, individual) in results.iter().enumerate() {
             let name = individual.get_name();
             let score = individual.get_score();
+
+            let place = if score == previous_score {
+                previous_place
+            } else {
+                place
+            };
+
+            if score != previous_score {
+                previous_score = score;
+            }
+            previous_place = place;
 
             let mut base: ColoredString = format!(
                 "{:2} {:longest_individual_name$} => {:>score_length$}",
@@ -244,8 +293,19 @@ impl Individual {
             };
 
             let school = individual.get_school();
+            let conference = individual.get_conference();
 
-            println!("{base} ({school})");
+            let conference_str: ColoredString = match conference {
+                1 => "1A".white(),
+                2 => "2A".yellow(),
+                3 => "3A".bright_blue(),
+                4 => "4A".green(),
+                5 => "5A".red(),
+                6 => "6A".magenta(),
+                _ => "".into(),
+            };
+
+            println!("{base} ({conference_str} - {school})");
         }
     }
 }

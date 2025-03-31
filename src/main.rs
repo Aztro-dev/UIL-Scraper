@@ -22,12 +22,9 @@ fn main() {
 
     let subject = Subject::from_str(&cli.subject).unwrap();
     let year = cli.year.unwrap_or(2025);
-    for conference in
-        match RequestFields::parse_conference(cli.conference.unwrap_or(String::from("0"))) {
-            Some(conf) => conf..=conf,
-            None => 1..=6,
-        }
-    {
+    let conferences =
+        RequestFields::parse_conference(cli.conference.unwrap_or(String::from("16"))).unwrap();
+    for conference in conferences {
         if cli.state.is_some() {
             let fields = RequestFields {
                 subject: subject.clone(),

@@ -6,7 +6,7 @@ pub struct Cli {
     /// Subject to find
     pub subject: String,
 
-    /// Find a specific conference, or ignore for all conferences
+    /// Find a specific conference, a range of conferences (ex. 3-5), or ignore for all conferences
     #[arg(short, long, value_name = "CONFERENCE")]
     pub conference: Option<String>,
 
