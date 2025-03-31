@@ -110,9 +110,9 @@ pub enum Subject {
 impl Subject {
     fn to_u8(&self) -> u8 {
         match *self {
-            Subject::Accounting => 0,
-            Subject::ComputerApplications => 1,
-            Subject::CurrentEvents => 2,
+            Subject::Accounting => 1,
+            Subject::ComputerApplications => 2,
+            Subject::CurrentEvents => 3,
             Subject::SocialStudies => 6,
             Subject::Spelling => 7,
             Subject::Calculator => 8,
