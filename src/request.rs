@@ -73,7 +73,7 @@ pub fn request(fields: RequestFields) -> Option<String> {
     let district = fields.get_district();
     let region = fields.get_region();
     let state = fields.get_state();
-    let subject = fields.subject.to_u8();
+    let subject: i8 = fields.subject.to_i8();
     let conference = fields.conference;
     let year = fields.year - 2008;
     let url: String = format!(
@@ -126,10 +126,11 @@ pub enum Subject {
     Mathematics,
     NumberSense,
     Science,
+    Sweepstakes,
 }
 
 impl Subject {
-    fn to_u8(&self) -> u8 {
+    fn to_i8(&self) -> i8 {
         match *self {
             Subject::Accounting => 1,
             Subject::ComputerApplications => 2,
@@ -141,6 +142,7 @@ impl Subject {
             Subject::Mathematics => 10,
             Subject::NumberSense => 11,
             Subject::Science => 12,
+            Subject::Sweepstakes => -1,
         }
     }
 
@@ -156,6 +158,7 @@ impl Subject {
             "mathematics" | "math" => Some(Self::Mathematics),
             "number_sense" | "ns" => Some(Self::NumberSense),
             "science" | "sci" => Some(Self::Science),
+            "sweepstakes" | "overall" => Some(Self::Sweepstakes),
             _ => None,
         }
     }

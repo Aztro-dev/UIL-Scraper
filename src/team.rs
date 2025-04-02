@@ -134,7 +134,7 @@ impl Team {
         Some(results)
     }
 
-    pub fn display_results(mut results: Vec<Self>, _subject: Subject) {
+    pub fn display_results(mut results: Vec<Self>, subject: Subject) {
         results.sort_by(|a, b| {
             let a_score = a.get_score();
             let b_score = b.get_score();
@@ -197,13 +197,17 @@ impl Team {
                 _ => base.fgcolor = None,
             };
 
-            let prog_length = std::cmp::max(
-                first.get_prog().unwrap().checked_ilog10().unwrap_or(0) as usize + 1,
-                "N/A".len(),
-            );
             if let Some(prog) = team.get_prog() {
+                let prog_length = std::cmp::max(
+                    first.get_prog().unwrap().checked_ilog10().unwrap_or(0) as usize + 1,
+                    "N/A".len(),
+                );
                 base.input = format!("{} (prog {:>prog_length$})", base.input, prog);
-            } else {
+            } else if matches!(subject, Subject::ComputerScience { .. }) {
+                let prog_length = std::cmp::max(
+                    first.get_prog().unwrap().checked_ilog10().unwrap_or(0) as usize + 1,
+                    "N/A".len(),
+                );
                 base.input = format!("{} (prog {:prog_length$})", base.input, "N/A");
             }
             let conference = team.get_conference();
