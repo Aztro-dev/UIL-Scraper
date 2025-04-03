@@ -2,7 +2,7 @@ use colored::{Color, ColoredString, Colorize};
 use scraper::{selectable::Selectable, *};
 use std::cmp;
 
-use crate::request::{RequestFields, Subject};
+use crate::request::{RequestFields, Subject, district_as_region};
 
 #[derive(Clone, Eq, PartialEq, PartialOrd, Debug)]
 pub enum Individual {
@@ -10,12 +10,16 @@ pub enum Individual {
         name: String,
         school: String,
         conference: u8,
+        district: Option<u8>,
+        region: Option<u8>,
         score: i16,
     },
     Science {
         name: String,
         school: String,
         conference: u8,
+        district: Option<u8>,
+        region: Option<u8>,
         score: i16,
         biology: i16,
         chemistry: i16,
@@ -30,12 +34,16 @@ impl Individual {
                 name: _,
                 school: _,
                 conference: _,
+                district: _,
+                region: _,
                 score,
             } => score,
             Individual::Science {
                 name: _,
                 school: _,
                 conference: _,
+                district: _,
+                region: _,
                 score,
                 biology: _,
                 chemistry: _,
@@ -49,12 +57,16 @@ impl Individual {
                 name,
                 school: _,
                 conference: _,
+                district: _,
+                region: _,
                 score: _,
             } => name.clone(),
             Individual::Science {
                 name,
                 school: _,
                 conference: _,
+                district: _,
+                region: _,
                 score: _,
                 biology: _,
                 chemistry: _,
@@ -69,12 +81,16 @@ impl Individual {
                 name: _,
                 school,
                 conference: _,
+                district: _,
+                region: _,
                 score: _,
             } => school.clone(),
             Individual::Science {
                 name: _,
                 school,
                 conference: _,
+                district: _,
+                region: _,
                 score: _,
                 biology: _,
                 chemistry: _,
@@ -88,17 +104,68 @@ impl Individual {
                 name: _,
                 school: _,
                 conference,
+                district: _,
+                region: _,
                 score: _,
             } => *conference,
             Individual::Science {
                 name: _,
                 school: _,
                 conference,
+                district: _,
+                region: _,
                 score: _,
                 biology: _,
                 chemistry: _,
                 physics: _,
             } => *conference,
+        }
+    }
+
+    pub fn get_district(&self) -> Option<u8> {
+        match self {
+            Individual::Normal {
+                name: _,
+                school: _,
+                conference: _,
+                district,
+                region: _,
+                score: _,
+            } => *district,
+            Individual::Science {
+                name: _,
+                school: _,
+                conference: _,
+                district,
+                region: _,
+                score: _,
+                biology: _,
+                chemistry: _,
+                physics: _,
+            } => *district,
+        }
+    }
+    pub fn get_region(&self) -> Option<u8> {
+        match self {
+            Individual::Normal {
+                name: _,
+                school: _,
+                conference: _,
+                district: _,
+                region,
+                score: _,
+            } => *region,
+            Individual::Science {
+                name: _,
+                school: _,
+                conference: _,
+                district: _,
+                region,
+                score: _,
+                biology: _,
+                chemistry: _,
+                physics: _,
+            } => *region,
         }
     }
 
@@ -109,6 +176,8 @@ impl Individual {
                 school,
                 score: _,
                 conference,
+                district,
+                region,
                 biology,
                 chemistry: _,
                 physics: _,
@@ -117,6 +186,8 @@ impl Individual {
                     name: name.clone(),
                     school: school.clone(),
                     conference: *conference,
+                    district: *district,
+                    region: *region,
                     score: *biology,
                     biology: *biology,
                     chemistry: *biology,
@@ -134,6 +205,8 @@ impl Individual {
                 school,
                 score: _,
                 conference,
+                district,
+                region,
                 biology: _,
                 chemistry,
                 physics: _,
@@ -142,6 +215,8 @@ impl Individual {
                     name: name.clone(),
                     school: school.clone(),
                     conference: *conference,
+                    district: *district,
+                    region: *region,
                     score: *chemistry,
                     biology: *chemistry,
                     chemistry: *chemistry,
@@ -159,6 +234,8 @@ impl Individual {
                 school,
                 score: _,
                 conference,
+                district,
+                region,
                 biology: _,
                 chemistry: _,
                 physics,
@@ -168,6 +245,8 @@ impl Individual {
                     school: school.clone(),
                     score: *physics,
                     conference: *conference,
+                    district: *district,
+                    region: *region,
                     biology: *physics,
                     chemistry: *physics,
                     physics: *physics,
@@ -201,6 +280,8 @@ impl Individual {
                     name: name.clone(),
                     school: school.clone(),
                     conference: fields.clone().conference,
+                    district: fields.clone().district,
+                    region: fields.clone().region,
                     biology: cells[4].parse::<i16>().unwrap_or(0),
                     chemistry: cells[5].parse::<i16>().unwrap_or(0),
                     physics: cells[6].parse::<i16>().unwrap_or(0),
@@ -210,6 +291,8 @@ impl Individual {
                     name: name.clone(),
                     school: school.clone(),
                     conference: fields.clone().conference,
+                    district: fields.clone().district,
+                    region: fields.clone().region,
                     score: cells[4].parse::<i16>().unwrap_or(0),
                 },
             };
@@ -230,6 +313,8 @@ impl Individual {
             Individual::Normal {
                 score: 0,
                 conference: 1,
+                district: None,
+                region: None,
                 school: String::new(),
                 name: String::new(),
             },
@@ -305,7 +390,16 @@ impl Individual {
                 _ => "".into(),
             };
 
-            println!("{base} ({conference_str} - {school})");
+            let district = individual.get_district();
+            if district.is_some() {
+                let region = district_as_region(district).unwrap_or(0);
+                let district = district.unwrap();
+                println!("{base} ({conference_str} D{district:<2} R{region} - {school})");
+            } else if let Some(region) = individual.get_region() {
+                println!("{base} ({conference_str} R{region} - {school})");
+            } else {
+                println!("{base} ({conference_str} - {school})");
+            }
         }
     }
 }

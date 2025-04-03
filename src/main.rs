@@ -18,7 +18,7 @@ fn main() {
     let cli = Cli::parse();
 
     let mut individual_results: Vec<Individual> = Vec::new();
-    let mut team_results: Vec<Team> = Vec::new();
+    let mut team_results: Vec<TeamResults> = Vec::new();
 
     let subject = Subject::from_str(&cli.subject).unwrap();
     let year = cli.year.unwrap_or(2025);
@@ -145,10 +145,10 @@ fn main() {
     }
     println!();
     println!("Team Scores:");
-    Team::display_results(team_results, subject);
+    TeamResults::display_results(team_results, subject);
 }
 
-fn scrape(fields: RequestFields) -> Option<(Vec<Individual>, Vec<Team>)> {
+fn scrape(fields: RequestFields) -> Option<(Vec<Individual>, Vec<TeamResults>)> {
     let conference = fields.conference;
     let level;
     if fields.state.is_some() {
@@ -164,7 +164,7 @@ fn scrape(fields: RequestFields) -> Option<(Vec<Individual>, Vec<Team>)> {
     let completed: ColoredString = format!("{conference}A {level} completed").green();
 
     let mut individual_results: Vec<Individual> = Vec::new();
-    let mut team_results: Vec<Team> = Vec::new();
+    let mut team_results: Vec<TeamResults> = Vec::new();
 
     if let Some((mut individual, mut team)) = request::perform_scrape(fields) {
         individual_results.append(&mut individual);

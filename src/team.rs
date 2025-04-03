@@ -1,85 +1,34 @@
 use colored::{Color, ColoredString, Colorize};
 use scraper::{ElementRef, Selector};
-use std::cmp;
+use std::{cmp, collections::HashMap};
 
-use crate::request::{RequestFields, Subject};
+use crate::request::{RequestFields, Subject, district_as_region};
+
+#[derive(Clone, Eq, PartialEq, PartialOrd, Debug)]
+pub struct TeamResults {
+    pub school: String,
+    pub score: i16,
+    pub conference: u8,
+    pub district: Option<u8>,
+    pub region: Option<u8>,
+    pub misc: Team,
+}
 
 #[derive(Clone, Eq, PartialEq, PartialOrd, Debug)]
 pub enum Team {
-    Normal {
-        score: i16,
-        conference: u8,
-        name: String,
-    },
-    ComputerScience {
-        score: i16,
-        conference: u8,
-        prog: Option<i16>,
-        name: String,
-    },
+    Normal,
+
+    ComputerScience { prog: Option<i16> },
 }
 
-impl Team {
-    pub fn get_score(&self) -> i16 {
-        match *self {
-            Team::Normal {
-                score,
-                name: _,
-                conference: _,
-            } => score,
-            Team::ComputerScience {
-                score,
-                conference: _,
-                prog: _,
-                name: _,
-            } => score,
-        }
-    }
+impl TeamResults {
     pub fn get_prog(&self) -> Option<i16> {
-        match *self {
-            Team::Normal {
-                score: _,
-                name: _,
-                conference: _,
-            } => None,
-            Team::ComputerScience {
-                score: _,
-                prog,
-                name: _,
-                conference: _,
-            } => prog,
+        match self.misc {
+            Team::Normal => None,
+            Team::ComputerScience { prog } => prog,
         }
     }
-    pub fn get_name(&self) -> String {
-        match self {
-            Team::Normal {
-                score: _,
-                name,
-                conference: _,
-            } => name.clone(),
-            Team::ComputerScience {
-                score: _,
-                prog: _,
-                conference: _,
-                name,
-            } => name.clone(),
-        }
-    }
-    pub fn get_conference(&self) -> u8 {
-        match self {
-            Team::Normal {
-                score: _,
-                name: _,
-                conference,
-            } => *conference,
-            Team::ComputerScience {
-                score: _,
-                prog: _,
-                conference,
-                name: _,
-            } => *conference,
-        }
-    }
+
     pub fn parse_table(table: ElementRef, fields: &RequestFields) -> Option<Vec<Self>> {
         let mut results: Vec<Self> = Vec::new();
 
@@ -115,18 +64,25 @@ impl Team {
             }
             let mut school = cells[1].clone();
             let _ = school.split_off(school.find(&span_text).unwrap());
-            let team: Team = match fields.clone().subject {
+            let district = fields.district;
+            let region = fields.region;
+            let misc = match fields.clone().subject {
                 Subject::ComputerScience => Team::ComputerScience {
-                    score: cells[3].parse::<i16>().unwrap_or(0),
                     prog: cells[2].parse::<i16>().ok(),
-                    name: school,
-                    conference: fields.clone().conference,
                 },
-                _ => Team::Normal {
-                    score: cells[2].parse::<i16>().unwrap_or(0),
-                    conference: fields.clone().conference,
-                    name: school,
-                },
+                _ => Team::Normal {},
+            };
+            let score = match fields.clone().subject {
+                Subject::ComputerScience => cells[3].parse::<i16>().unwrap_or(0),
+                _ => cells[2].parse::<i16>().unwrap_or(0),
+            };
+            let team: TeamResults = TeamResults {
+                score,
+                school,
+                conference: fields.clone().conference,
+                district,
+                region,
+                misc,
             };
 
             results.push(team);
@@ -136,31 +92,69 @@ impl Team {
 
     pub fn display_results(mut results: Vec<Self>, subject: Subject) {
         results.sort_by(|a, b| {
-            let a_score = a.get_score();
-            let b_score = b.get_score();
+            let a_score = a.score;
+            let b_score = b.score;
             b_score.cmp(&a_score)
         });
         results.resize(
             cmp::min(results.len(), 25),
-            Team::Normal {
+            TeamResults {
                 score: 0,
+                school: String::new(),
                 conference: 0,
-                name: String::new(),
+                district: None,
+                region: None,
+                misc: Team::Normal,
             },
         );
         let mut longest_team_name = 0;
+        // u8: district or region
+        // i16: score
+        let mut winning_teams: HashMap<(u8, u8), i16> = HashMap::new();
         for team in results.iter() {
-            if team.get_name().len() > longest_team_name {
-                longest_team_name = team.get_name().len();
+            if team.school.len() > longest_team_name {
+                longest_team_name = team.school.len();
+            }
+            let location = team.district.unwrap_or(team.region.unwrap_or(0));
+            winning_teams
+                .entry((location, team.conference))
+                .or_insert(team.score);
+        }
+
+        // u8: region or district
+        // i16: score
+        let mut wildcarding_teams: HashMap<(u8, u8), i16> = HashMap::new();
+
+        for team in results.iter() {
+            if team.district.is_some() {
+                let location = team.district.unwrap();
+                if *winning_teams.get(&(location, team.conference)).unwrap() > team.score {
+                    let region_value = district_as_region(Some(location)).unwrap();
+                    let result =
+                        wildcarding_teams.insert((region_value, team.conference), team.score);
+                    if let Some(old_value) = result {
+                        wildcarding_teams.insert((region_value, team.conference), old_value);
+                    }
+                }
+            } else if team.region.is_some() {
+                let location = team.region.unwrap();
+                if *winning_teams.get(&(location, team.conference)).unwrap() > team.score {
+                    let result = wildcarding_teams.insert((1, team.conference), team.score);
+                    if let Some(old_value) = result {
+                        wildcarding_teams.insert((1, team.conference), old_value);
+                    }
+                }
             }
         }
+
         let first = results.first().unwrap();
-        let score_length = first.get_score().checked_ilog10().unwrap_or(0) as usize + 1;
-        let mut previous_score = results.first().unwrap().get_score();
+        let score_length = first.score.checked_ilog10().unwrap_or(0) as usize + 1;
+        let mut previous_score = results.first().unwrap().score;
         let mut previous_place = 0;
+
         for (place, team) in results.iter().enumerate() {
-            let name = team.get_name();
-            let score = team.get_score();
+            let school = team.school.clone();
+            let score = team.score;
 
             let place = if score == previous_score {
                 previous_place
@@ -176,7 +170,7 @@ impl Team {
             let mut base: ColoredString = format!(
                 "{:2} {:longest_team_name$} => {:>score_length$}",
                 place + 1,
-                name,
+                school,
                 score
             )
             .into();
@@ -210,7 +204,7 @@ impl Team {
                 );
                 base.input = format!("{} (prog {:prog_length$})", base.input, "N/A");
             }
-            let conference = team.get_conference();
+            let conference = team.conference;
 
             let conference_str: ColoredString = match conference {
                 1 => "1A".white(),
@@ -222,7 +216,39 @@ impl Team {
                 _ => "".into(),
             };
 
-            println!("{base} {conference_str}");
+            if let Some(district) = team.district {
+                let mut advance_status = "".green();
+                if winning_teams.contains_key(&(district, conference))
+                    && *winning_teams.get(&(district, conference)).unwrap_or(&0) == score
+                {
+                    advance_status = "(Advancing)".green();
+                } else if wildcarding_teams
+                    .contains_key(&(district_as_region(Some(district)).unwrap(), conference))
+                    && *wildcarding_teams
+                        .get(&(district_as_region(Some(district)).unwrap(), conference))
+                        .unwrap_or(&0)
+                        == score
+                {
+                    advance_status = "(Wildcarding)".yellow();
+                }
+
+                println!("{base} {conference_str} - District {district:<2} {advance_status}");
+            } else if let Some(region) = team.region {
+                let mut advance_status = "".green();
+                if winning_teams.contains_key(&(region, conference))
+                    && *winning_teams.get(&(region, conference)).unwrap_or(&0) == score
+                {
+                    advance_status = "(Advancing)".green();
+                } else if wildcarding_teams.contains_key(&(1, conference))
+                    && *wildcarding_teams.get(&(1, conference)).unwrap_or(&0) == score
+                {
+                    advance_status = "(Wildcarding)".yellow();
+                }
+
+                println!("{base} {conference_str} - Region {region} {advance_status}");
+            } else {
+                println!("{base} {conference_str}");
+            }
         }
     }
 }

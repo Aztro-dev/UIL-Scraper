@@ -1,7 +1,7 @@
 use minreq::Response;
 use scraper::{Html, Selector};
 
-use crate::{individual::Individual, team::Team};
+use crate::{individual::Individual, team::TeamResults};
 
 #[derive(Clone)]
 pub struct RequestFields {
@@ -88,9 +88,9 @@ pub fn request(fields: RequestFields) -> Option<String> {
     Some(response.as_str().ok()?.to_string())
 }
 
-pub fn perform_scrape(fields: RequestFields) -> Option<(Vec<Individual>, Vec<Team>)> {
+pub fn perform_scrape(fields: RequestFields) -> Option<(Vec<Individual>, Vec<TeamResults>)> {
     let mut individual_results: Vec<Individual> = Vec::new();
-    let mut team_results: Vec<Team> = Vec::new();
+    let mut team_results: Vec<TeamResults> = Vec::new();
 
     let request = request(fields.clone())?;
 
@@ -105,7 +105,7 @@ pub fn perform_scrape(fields: RequestFields) -> Option<(Vec<Individual>, Vec<Tea
 
     individual_results.append(&mut individuals);
 
-    let mut teams = Team::parse_table(team_table, &fields)?;
+    let mut teams = TeamResults::parse_table(team_table, &fields)?;
 
     team_results.append(&mut teams);
 
@@ -162,4 +162,25 @@ impl Subject {
             _ => None,
         }
     }
+
+    // pub fn list_options() {
+    //     let accounting
+    // }
+}
+
+pub fn district_as_region(district: Option<u8>) -> Option<u8> {
+    district?;
+    let region = match district.unwrap() {
+        1..=8 => 1,
+        9..=16 => 2,
+        17..=24 => 3,
+        25..=32 => 4,
+        _ => 0,
+    };
+
+    if region == 0 {
+        return None;
+    }
+
+    Some(region)
 }
