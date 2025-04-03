@@ -1,6 +1,9 @@
+use std::sync::{Arc, Mutex};
+
 use colored::{ColoredString, Colorize};
 
 mod request;
+use rayon::prelude::*;
 use request::*;
 
 mod individual;
@@ -17,8 +20,8 @@ use clap::Parser;
 fn main() {
     let cli = Cli::parse();
 
-    let mut individual_results: Vec<Individual> = Vec::new();
-    let mut team_results: Vec<TeamResults> = Vec::new();
+    let individual_results = Arc::new(Mutex::new(Vec::new()));
+    let team_results = Arc::new(Mutex::new(Vec::new()));
 
     let subject = Subject::from_str(&cli.subject).unwrap();
     let year = cli.year.unwrap_or(2025);
@@ -36,8 +39,15 @@ fn main() {
             };
 
             if let Some((mut individual, mut team)) = scrape(fields) {
-                individual_results.append(&mut individual);
-                team_results.append(&mut team);
+                // Lock and modify safely
+                {
+                    let mut ind_lock = individual_results.lock().unwrap();
+                    ind_lock.append(&mut individual);
+                }
+                {
+                    let mut team_lock = team_results.lock().unwrap();
+                    team_lock.append(&mut team);
+                }
             }
             continue;
         }
@@ -52,12 +62,19 @@ fn main() {
             };
 
             if let Some((mut individual, mut team)) = scrape(fields) {
-                individual_results.append(&mut individual);
-                team_results.append(&mut team);
+                // Lock and modify safely
+                {
+                    let mut ind_lock = individual_results.lock().unwrap();
+                    ind_lock.append(&mut individual);
+                }
+                {
+                    let mut team_lock = team_results.lock().unwrap();
+                    team_lock.append(&mut team);
+                }
             }
             continue;
         } else if cli.region.is_some() {
-            for region in 1..=4 {
+            (1..=4).into_par_iter().for_each(|region| {
                 let fields = RequestFields {
                     subject: subject.clone(),
                     district: None,
@@ -68,11 +85,17 @@ fn main() {
                 };
 
                 if let Some((mut individual, mut team)) = scrape(fields) {
-                    individual_results.append(&mut individual);
-                    team_results.append(&mut team);
+                    // Lock and modify safely
+                    {
+                        let mut ind_lock = individual_results.lock().unwrap();
+                        ind_lock.append(&mut individual);
+                    }
+                    {
+                        let mut team_lock = team_results.lock().unwrap();
+                        team_lock.append(&mut team);
+                    }
                 }
-                continue;
-            }
+            });
         }
         if cli.district.is_some() && cli.district.unwrap() != 0 {
             let fields = RequestFields {
@@ -85,12 +108,19 @@ fn main() {
             };
 
             if let Some((mut individual, mut team)) = scrape(fields) {
-                individual_results.append(&mut individual);
-                team_results.append(&mut team);
+                // Lock and modify safely
+                {
+                    let mut ind_lock = individual_results.lock().unwrap();
+                    ind_lock.append(&mut individual);
+                }
+                {
+                    let mut team_lock = team_results.lock().unwrap();
+                    team_lock.append(&mut team);
+                }
             }
             continue;
         } else if cli.district.is_some() {
-            for district in 1..=32 {
+            (1..=32).into_par_iter().for_each(|district| {
                 let fields = RequestFields {
                     subject: subject.clone(),
                     district: Some(district),
@@ -101,54 +131,53 @@ fn main() {
                 };
 
                 if let Some((mut individual, mut team)) = scrape(fields) {
-                    individual_results.append(&mut individual);
-                    team_results.append(&mut team);
+                    // Lock and modify safely
+                    {
+                        let mut ind_lock = individual_results.lock().unwrap();
+                        ind_lock.append(&mut individual);
+                    }
+                    {
+                        let mut team_lock = team_results.lock().unwrap();
+                        team_lock.append(&mut team);
+                    }
                 }
-                continue;
-            }
+            });
         }
     }
 
-    match subject {
-        Subject::Science => {
-            let mut biology = individual_results.clone();
-            biology.retain_mut(|x| {
-                x.to_biology();
-                true
-            });
-            let mut chemistry = individual_results.clone();
-            chemistry.retain_mut(|x| {
-                x.to_chemistry();
-                true
-            });
-            let mut physics = individual_results.clone();
-            physics.retain_mut(|x| {
-                x.to_physics();
-                true
-            });
-            println!("Individual Total Scores:");
-            Individual::display_results(individual_results);
-            println!();
-            println!("Individual Biology Scores:");
-            Individual::display_results(biology);
-            println!();
-            println!("Individual Chemistry Scores:");
-            Individual::display_results(chemistry);
-            println!();
-            println!("Individual Physics Scores:");
-            Individual::display_results(physics);
-        }
-        _ => {
-            println!("Individual Scores:");
-            Individual::display_results(individual_results);
-        }
-    }
+    println!("Individual Total Scores:");
+    Individual::display_results(individual_results.lock().unwrap().clone());
     println!();
+    if let Subject::Science = subject {
+        let mut biology = individual_results.lock().unwrap().clone();
+        biology.retain_mut(|x| {
+            x.score = x.get_biology().unwrap();
+            true
+        });
+        let mut chemistry = individual_results.lock().unwrap().clone();
+        chemistry.retain_mut(|x| {
+            x.score = x.get_chemistry().unwrap();
+            true
+        });
+        let mut physics = individual_results.lock().unwrap().clone();
+        physics.retain_mut(|x| {
+            x.score = x.get_physics().unwrap();
+            true
+        });
+        println!("Individual Biology Scores:");
+        Individual::display_results(biology);
+        println!();
+        println!("Individual Chemistry Scores:");
+        Individual::display_results(chemistry);
+        println!();
+        println!("Individual Physics Scores:");
+        Individual::display_results(physics);
+    }
     println!("Team Scores:");
-    TeamResults::display_results(team_results, subject);
+    Team::display_results(team_results.lock().unwrap().to_vec(), subject);
 }
 
-fn scrape(fields: RequestFields) -> Option<(Vec<Individual>, Vec<TeamResults>)> {
+fn scrape(fields: RequestFields) -> Option<(Vec<Individual>, Vec<Team>)> {
     let conference = fields.conference;
     let level;
     if fields.state.is_some() {
@@ -164,7 +193,7 @@ fn scrape(fields: RequestFields) -> Option<(Vec<Individual>, Vec<TeamResults>)> 
     let completed: ColoredString = format!("{conference}A {level} completed").green();
 
     let mut individual_results: Vec<Individual> = Vec::new();
-    let mut team_results: Vec<TeamResults> = Vec::new();
+    let mut team_results: Vec<Team> = Vec::new();
 
     if let Some((mut individual, mut team)) = request::perform_scrape(fields) {
         individual_results.append(&mut individual);

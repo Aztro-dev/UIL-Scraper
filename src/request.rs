@@ -1,7 +1,7 @@
 use minreq::Response;
 use scraper::{Html, Selector};
 
-use crate::{individual::Individual, team::TeamResults};
+use crate::{individual::Individual, team::Team};
 
 #[derive(Clone)]
 pub struct RequestFields {
@@ -88,9 +88,9 @@ pub fn request(fields: RequestFields) -> Option<String> {
     Some(response.as_str().ok()?.to_string())
 }
 
-pub fn perform_scrape(fields: RequestFields) -> Option<(Vec<Individual>, Vec<TeamResults>)> {
+pub fn perform_scrape(fields: RequestFields) -> Option<(Vec<Individual>, Vec<Team>)> {
     let mut individual_results: Vec<Individual> = Vec::new();
-    let mut team_results: Vec<TeamResults> = Vec::new();
+    let mut team_results: Vec<Team> = Vec::new();
 
     let request = request(fields.clone())?;
 
@@ -105,7 +105,7 @@ pub fn perform_scrape(fields: RequestFields) -> Option<(Vec<Individual>, Vec<Tea
 
     individual_results.append(&mut individuals);
 
-    let mut teams = TeamResults::parse_table(team_table, &fields)?;
+    let mut teams = Team::parse_table(team_table, &fields)?;
 
     team_results.append(&mut teams);
 

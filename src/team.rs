@@ -5,27 +5,27 @@ use std::{cmp, collections::HashMap};
 use crate::request::{RequestFields, Subject, district_as_region};
 
 #[derive(Clone, Eq, PartialEq, PartialOrd, Debug)]
-pub struct TeamResults {
+pub struct Team {
     pub school: String,
     pub score: i16,
     pub conference: u8,
     pub district: Option<u8>,
     pub region: Option<u8>,
-    pub misc: Team,
+    pub misc: TeamMisc,
 }
 
 #[derive(Clone, Eq, PartialEq, PartialOrd, Debug)]
-pub enum Team {
+pub enum TeamMisc {
     Normal,
 
     ComputerScience { prog: Option<i16> },
 }
 
-impl TeamResults {
+impl Team {
     pub fn get_prog(&self) -> Option<i16> {
         match self.misc {
-            Team::Normal => None,
-            Team::ComputerScience { prog } => prog,
+            TeamMisc::Normal => None,
+            TeamMisc::ComputerScience { prog } => prog,
         }
     }
 
@@ -67,16 +67,16 @@ impl TeamResults {
             let district = fields.district;
             let region = fields.region;
             let misc = match fields.clone().subject {
-                Subject::ComputerScience => Team::ComputerScience {
+                Subject::ComputerScience => TeamMisc::ComputerScience {
                     prog: cells[2].parse::<i16>().ok(),
                 },
-                _ => Team::Normal {},
+                _ => TeamMisc::Normal {},
             };
             let score = match fields.clone().subject {
                 Subject::ComputerScience => cells[3].parse::<i16>().unwrap_or(0),
                 _ => cells[2].parse::<i16>().unwrap_or(0),
             };
-            let team: TeamResults = TeamResults {
+            let team: Team = Team {
                 score,
                 school,
                 conference: fields.clone().conference,
@@ -98,13 +98,13 @@ impl TeamResults {
         });
         results.resize(
             cmp::min(results.len(), 25),
-            TeamResults {
+            Team {
                 score: 0,
                 school: String::new(),
                 conference: 0,
                 district: None,
                 region: None,
-                misc: Team::Normal,
+                misc: TeamMisc::Normal,
             },
         );
         let mut longest_team_name = 0;
