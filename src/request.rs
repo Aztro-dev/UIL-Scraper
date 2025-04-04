@@ -7,7 +7,7 @@ use crate::{individual::Individual, team::Team};
 pub struct RequestFields {
     pub district: Option<u8>,
     pub region: Option<u8>,
-    pub state: Option<u8>,
+    pub state: bool,
     pub subject: Subject,
     pub conference: u8,
     pub year: u16,
@@ -61,7 +61,7 @@ impl RequestFields {
         }
     }
     fn get_state(&self) -> String {
-        if self.state.is_none() {
+        if !self.state {
             String::new()
         } else {
             String::from("1")

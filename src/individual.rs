@@ -104,25 +104,27 @@ impl Individual {
         Some(results)
     }
 
-    pub fn display_results(mut results: Vec<Self>) {
+    pub fn display_results(mut results: Vec<Self>, positions: usize) {
         results.sort_by(|a, b| {
             let a_score = a.score;
             let b_score = b.score;
             b_score.cmp(&a_score)
         });
 
-        results.resize(
-            cmp::min(results.len(), 25),
-            Individual {
-                score: 0,
-                conference: 1,
-                district: None,
-                region: None,
-                school: String::new(),
-                name: String::new(),
-                misc: IndividualMisc::Normal,
-            },
-        );
+        if positions != 0 {
+            results.resize(
+                cmp::min(results.len(), positions),
+                Individual {
+                    score: 0,
+                    conference: 1,
+                    district: None,
+                    region: None,
+                    school: String::new(),
+                    name: String::new(),
+                    misc: IndividualMisc::Normal,
+                },
+            );
+        }
 
         let mut longest_individual_name = 0;
 

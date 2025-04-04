@@ -90,23 +90,27 @@ impl Team {
         Some(results)
     }
 
-    pub fn display_results(mut results: Vec<Self>, subject: Subject) {
+    pub fn display_results(mut results: Vec<Self>, subject: Subject, positions: usize) {
         results.sort_by(|a, b| {
             let a_score = a.score;
             let b_score = b.score;
             b_score.cmp(&a_score)
         });
-        results.resize(
-            cmp::min(results.len(), 25),
-            Team {
-                score: 0,
-                school: String::new(),
-                conference: 0,
-                district: None,
-                region: None,
-                misc: TeamMisc::Normal,
-            },
-        );
+
+        if positions != 0 {
+            results.resize(
+                cmp::min(results.len(), positions),
+                Team {
+                    score: 0,
+                    school: String::new(),
+                    conference: 0,
+                    district: None,
+                    region: None,
+                    misc: TeamMisc::Normal,
+                },
+            );
+        }
+
         let mut longest_team_name = 0;
         // u8: district or region
         // i16: score
