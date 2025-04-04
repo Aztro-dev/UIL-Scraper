@@ -79,7 +79,7 @@ pub fn request(fields: RequestFields) -> Option<String> {
     let url: String = format!(
         "https://postings.speechwire.com/r-uil-academics.php?groupingid={subject}&Submit=View+postings&region={region}&district={district}&state={state}&conference={conference}&seasonid={year}"
     );
-    let response: Response = minreq::get(url).send().ok()?;
+    let response: Response = minreq::get(url).with_timeout(1000).send().ok()?;
 
     if response.status_code >= 400 {
         return None;
