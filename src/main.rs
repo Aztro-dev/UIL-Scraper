@@ -28,7 +28,7 @@ fn main() {
     let conferences =
         RequestFields::parse_conference(cli.conference.unwrap_or(String::from("16"))).unwrap();
     for conference in conferences {
-        if cli.state.is_some() {
+        if cli.state {
             let fields = RequestFields {
                 subject: subject.clone(),
                 district: None,
@@ -56,7 +56,7 @@ fn main() {
                 subject: subject.clone(),
                 district: None,
                 region: cli.region,
-                state: None,
+                state: false,
                 conference,
                 year,
             };
@@ -79,7 +79,7 @@ fn main() {
                     subject: subject.clone(),
                     district: None,
                     region: Some(region),
-                    state: None,
+                    state: false,
                     conference,
                     year,
                 };
@@ -102,7 +102,7 @@ fn main() {
                 subject: subject.clone(),
                 district: cli.district,
                 region: None,
-                state: None,
+                state: false,
                 conference,
                 year,
             };
@@ -125,7 +125,7 @@ fn main() {
                     subject: subject.clone(),
                     district: Some(district),
                     region: None,
-                    state: None,
+                    state: false,
                     conference,
                     year,
                 };
@@ -146,7 +146,10 @@ fn main() {
     }
 
     println!("Individual Total Scores:");
-    Individual::display_results(individual_results.lock().unwrap().clone());
+    Individual::display_results(
+        individual_results.lock().unwrap().clone(),
+        cli.individual_positions.unwrap_or(25),
+    );
     println!();
     if let Subject::Science = subject {
         let mut biology = individual_results.lock().unwrap().clone();
@@ -165,22 +168,26 @@ fn main() {
             true
         });
         println!("Individual Biology Scores:");
-        Individual::display_results(biology);
+        Individual::display_results(biology, cli.individual_positions.unwrap_or(25));
         println!();
         println!("Individual Chemistry Scores:");
-        Individual::display_results(chemistry);
+        Individual::display_results(chemistry, cli.individual_positions.unwrap_or(25));
         println!();
         println!("Individual Physics Scores:");
-        Individual::display_results(physics);
+        Individual::display_results(physics, cli.individual_positions.unwrap_or(25));
     }
     println!("Team Scores:");
-    Team::display_results(team_results.lock().unwrap().to_vec(), subject);
+    Team::display_results(
+        team_results.lock().unwrap().to_vec(),
+        subject,
+        cli.team_positions.unwrap_or(25),
+    );
 }
 
 fn scrape(fields: RequestFields) -> Option<(Vec<Individual>, Vec<Team>)> {
     let conference = fields.conference;
     let level;
-    if fields.state.is_some() {
+    if fields.state {
         level = String::from("States");
     } else if fields.region.is_some() {
         level = format!("Region {}", fields.region.unwrap());
