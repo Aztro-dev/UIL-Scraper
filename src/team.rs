@@ -225,7 +225,7 @@ impl Team {
                 if winning_teams.contains_key(&(district, conference))
                     && *winning_teams.get(&(district, conference)).unwrap_or(&0) == score
                 {
-                    advance_status = "(Advancing)".green();
+                    advance_status = "(Advanced)".green();
                 } else if wildcarding_teams
                     .contains_key(&(district_as_region(Some(district)).unwrap(), conference))
                     && *wildcarding_teams
@@ -233,7 +233,7 @@ impl Team {
                         .unwrap_or(&0)
                         == score
                 {
-                    advance_status = "(Wildcarding)".yellow();
+                    advance_status = "(Wildcard)".yellow();
                 }
 
                 println!("{base} {conference_str} - District {district:<2} {advance_status}");
@@ -242,11 +242,11 @@ impl Team {
                 if winning_teams.contains_key(&(region, conference))
                     && *winning_teams.get(&(region, conference)).unwrap_or(&0) == score
                 {
-                    advance_status = "(Advancing)".green();
+                    advance_status = "(Advanced)".green();
                 } else if wildcarding_teams.contains_key(&(1, conference))
                     && *wildcarding_teams.get(&(1, conference)).unwrap_or(&0) == score
                 {
-                    advance_status = "(Wildcarding)".yellow();
+                    advance_status = "(Wildcard)".yellow();
                 }
 
                 println!("{base} {conference_str} - Region {region} {advance_status}");
