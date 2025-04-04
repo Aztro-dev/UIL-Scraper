@@ -116,9 +116,11 @@ pub fn perform_scrape(fields: RequestFields) -> Option<(Vec<Individual>, Vec<Tea
 #[derive(Clone)]
 pub enum Subject {
     Accounting,
-    /// No longer competed in
+    // NOTE: computer applications isn't fully supported
     ComputerApplications,
+    // NOTE: current events isn't fully supported
     CurrentEvents,
+    // NOTE: social studies isn't fully supported
     SocialStudies,
     Spelling,
     Calculator,
@@ -126,6 +128,7 @@ pub enum Subject {
     Mathematics,
     NumberSense,
     Science,
+    // NOTE: sweepstakes isn't fully supported
     Sweepstakes,
 }
 
