@@ -35,7 +35,7 @@ cargo build
 
 ```sh
 # Linux/MacOS:
-export PATH="$PATH:/path/to/ULI-Scraper/target/build"
+export PATH="$PATH:/path/to/UIL-Scraper/target/build"
 # Windows:
 Lmao google it
 ```
