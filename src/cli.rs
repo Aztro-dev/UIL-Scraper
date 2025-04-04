@@ -18,11 +18,25 @@ pub struct Cli {
     #[arg(short, long, value_name = "REGION")]
     pub region: Option<u8>,
 
-    /// Find the state results, can be any number
-    #[arg(short, long, value_name = "STATE")]
-    pub state: Option<u8>,
+    /// Find the state results
+    #[arg(short, long)]
+    pub state: bool,
 
     /// Find a past/current year, or leave blank for the current year
     #[arg(short, long, value_name = "YEAR")]
     pub year: Option<u16>,
+
+    /// Describes how many positions to show for the individual results
+    /// Defaults to 25, with 0 being all teams
+    #[arg(short, long, value_name = "INDIVIDUAL POSITIONS")]
+    pub individual_positions: Option<usize>,
+
+    /// Describes how many positions to show for the team results
+    /// Defaults to 25, with 0 being all teams
+    #[arg(short, long, value_name = "TEAM POSITIONS")]
+    pub team_positions: Option<usize>,
+
+    /// Mutes the district/region/state "completed" output lines
+    #[arg(short, long)]
+    pub mute: bool,
 }
