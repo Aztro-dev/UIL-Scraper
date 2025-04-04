@@ -10,12 +10,12 @@ pub struct Cli {
     #[arg(short, long, value_name = "CONFERENCE")]
     pub conference: Option<String>,
 
-    /// Find a specific district, or 0 for all districts
-    #[arg(short, long, value_name = "DISTRICT")]
+    /// Find a specific district, or blank/0 for all districts
+    #[arg(short, long, value_name = "DISTRICT", num_args = 0..=1, default_missing_value = "0")]
     pub district: Option<u8>,
 
-    /// Find a specific region, or 0 for all regions
-    #[arg(short, long, value_name = "REGION")]
+    /// Find a specific region, or blank/0 for all regions
+    #[arg(short, long, value_name = "REGION", num_args = 0..=1, default_missing_value = "0")]
     pub region: Option<u8>,
 
     /// Find the state results
