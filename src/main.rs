@@ -38,7 +38,7 @@ fn main() {
                 year,
             };
 
-            if let Some((mut individual, mut team)) = scrape(fields) {
+            if let Some((mut individual, mut team)) = scrape(fields, cli.mute) {
                 // Lock and modify safely
                 {
                     let mut ind_lock = individual_results.lock().unwrap();
@@ -61,7 +61,7 @@ fn main() {
                 year,
             };
 
-            if let Some((mut individual, mut team)) = scrape(fields) {
+            if let Some((mut individual, mut team)) = scrape(fields, cli.mute) {
                 // Lock and modify safely
                 {
                     let mut ind_lock = individual_results.lock().unwrap();
@@ -84,7 +84,7 @@ fn main() {
                     year,
                 };
 
-                if let Some((mut individual, mut team)) = scrape(fields) {
+                if let Some((mut individual, mut team)) = scrape(fields, cli.mute) {
                     // Lock and modify safely
                     {
                         let mut ind_lock = individual_results.lock().unwrap();
@@ -107,7 +107,7 @@ fn main() {
                 year,
             };
 
-            if let Some((mut individual, mut team)) = scrape(fields) {
+            if let Some((mut individual, mut team)) = scrape(fields, cli.mute) {
                 // Lock and modify safely
                 {
                     let mut ind_lock = individual_results.lock().unwrap();
@@ -130,7 +130,7 @@ fn main() {
                     year,
                 };
 
-                if let Some((mut individual, mut team)) = scrape(fields) {
+                if let Some((mut individual, mut team)) = scrape(fields, cli.mute) {
                     // Lock and modify safely
                     {
                         let mut ind_lock = individual_results.lock().unwrap();
@@ -184,7 +184,7 @@ fn main() {
     );
 }
 
-fn scrape(fields: RequestFields) -> Option<(Vec<Individual>, Vec<Team>)> {
+fn scrape(fields: RequestFields, mute: bool) -> Option<(Vec<Individual>, Vec<Team>)> {
     let conference = fields.conference;
     let level;
     if fields.state {
@@ -205,8 +205,10 @@ fn scrape(fields: RequestFields) -> Option<(Vec<Individual>, Vec<Team>)> {
     if let Some((mut individual, mut team)) = request::perform_scrape(fields) {
         individual_results.append(&mut individual);
         team_results.append(&mut team);
-        println!("{completed}");
-    } else {
+        if !mute {
+            println!("{completed}");
+        }
+    } else if !mute {
         println!("{unavailable}");
     }
 
