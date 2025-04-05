@@ -1,15 +1,20 @@
+# uil_scraper
+
 A web scraper for the most of the Academic UIL events, including:
 
 - Accounting
-- Computer Applications
-- Social Studies
-- Spelling
 - Calculator
 - Computer Science
 - Mathematics
 - Number Sense
 - Science
+- Social Studies
+- Spelling
 - Sweepstakes (overall)
+
+# Credits
+
+This was originally inspired by a (significantly worse) Python script written by Warith that was eventually turned into a web design, which can be found [here](https://github.com/warithr621/uil-hub).
 
 # Pre-requisites
 
@@ -31,52 +36,54 @@ cd UIL-Scraper
 cargo build
 ```
 
-- If you want to use this command whenever you open up your terminal, I would recommend adding the produced binary to your path
+- If you want to use this command whenever you open up your terminal, I would recommend adding the produced binary to your PATH
 
 ```sh
 # Linux/MacOS:
-export PATH="$PATH:/path/to/UIL-Scraper/target/build"
+export PATH="$PATH:/path/to/UIL-Scraper/target/debug"
 # Windows:
-Lmao google it
+setx PATH "%PATH%;C:\path\to\UIL-Scraper\target\debug" # in CMD Prompt
 ```
 
 - I would also recommend moving the binary to another folder in case you want to delete the `UIL-Scraper` folder but not the binary
 
 ```sh
 # Linux/MacOS:
-mv /path/to/UIL-Scraper/target/build/uil_scraper /path/to/folder
+mv /path/to/UIL-Scraper/target/debug/uil_scraper /path/to/folder
 # Windows:
-move /path/to/UIL-Scraper/target/build/uil_scraper /path/to/folder
+move /path/to/UIL-Scraper/target/debug/uil_scraper /path/to/folder
 ```
+
+You can now run the `uil_scraper` command! In case you did not add the binary into your PATH or have it in your current directory, `cd` into the produced `target/debug` to run it.
 
 # Supported commands/options
 
-- SUBJECT:
+## SUBJECT
 
-  - You must specify a subject that is from the subject list, but in a certain manner. Here are the supported strings you can pass in:
+You must specify a subject that is from the subject list, but in a certain manner. Here are the supported strings you can pass in:
 
   ```rust
   "accounting" => Accounting,
-  "current_events" => Current Events,
-  "comp_sci" or "cs" => Computer Science,
   "calculator" or "calc" => Calculator,
-  "spelling" or "spell" => Spelling,
-  "social_studies" => Social Studies,
+  "comp_sci" or "cs" => Computer Science,
+  "current_events" => Current Events,
   "mathematics" or "math" => Mathematics,
   "number_sense" or "ns" => Number Sense,
-  "science" or "sci" => Science),
+  "science" or "sci" => Science,
+  "social_studies" => Social Studies,
+  "spelling" or "spell" => Spelling,
   "sweepstakes" or "overall" => Sweepstakes,
   ```
 
-- LEVEL:
+## LEVEL
 
-  - While this technically isn't a single variable, it is still required if you want results
+While this technically isn't a single variable, it is still required if you want results
 
-  - district:
+- district:
 
-    - Included by passing in `--district <district>`
-    - Put any number 1-32 for a specific district, or 0/leave blank for all districts
-    - Examples:
+  - Included by passing in `--district <district>`
+  - Put any number 1-32 for a specific district, or 0/leave blank for all districts
+  - Examples:
 
     ```sh
     uil_scraper mathematics --district 11 # district 11 specifically
@@ -84,11 +91,11 @@ move /path/to/UIL-Scraper/target/build/uil_scraper /path/to/folder
     uil_scraper mathematics --district    # all districts
     ```
 
-  - region:
+- region:
 
-    - Included by passing in `--region <region>`
-    - Put any number 1-4 for a specific region, or 0/leave blank for all regions
-    - Examples:
+  - Included by passing in `--region <region>`
+  - Put any number 1-4 for a specific region, or 0/leave blank for all regions
+  - Examples:
 
     ```sh
     uil_scraper mathematics --region 2 # region 2 specifically
@@ -96,16 +103,16 @@ move /path/to/UIL-Scraper/target/build/uil_scraper /path/to/folder
     uil_scraper mathematics --region   # all regions 
     ```
 
-  - state:
+- state:
 
-    - Included by passing in `--state`
-    - Example:
+  - Included by passing in `--state`
+  - Example:
 
     ```sh
     uil_scraper mathematics --state
     ```
 
-- CONFERENCE (optional):
+## CONFERENCE (optional):
 
   - Included by passing in `--conference <conference>`
   - The `conference` can be in the form of a single number (`4`), a number and letter (`4a`) or number and uppercase letter (`4A`)
@@ -123,7 +130,7 @@ move /path/to/UIL-Scraper/target/build/uil_scraper /path/to/folder
   uil_scraper mathematics --district --conference 41   # District 1A to 4A results
   ```
 
-- YEAR (optional):
+## YEAR (optional):
 
   - Included by passing in `--year <year>`
   - Only supported values are 2023-2025, because this utility scrapes SpeechWire specifically.
@@ -135,7 +142,7 @@ move /path/to/UIL-Scraper/target/build/uil_scraper /path/to/folder
   uil_scraper mathematics --state             # 2025 state results
   ```
 
-- INDIVIDUAL POSITIONS (optional):
+## INDIVIDUAL POSITIONS (optional):
 
   - Included by passing in `--individual-positions <positions>` or `-i <positions>` for short
   - Defaults to 25, and changes the number of individual results that are shown
@@ -145,7 +152,7 @@ move /path/to/UIL-Scraper/target/build/uil_scraper /path/to/folder
   uil_scraper mathematics --district --individual-positions 100 # show top 100 results
   ```
 
-- TEAM POSITIONS (optional):
+## TEAM POSITIONS (optional):
 
   - Included by passing in `--team-positions <positions>` or `-t <positions>` for short
   - Defaults to 25, and changes the number of team results that are shown
@@ -155,7 +162,7 @@ move /path/to/UIL-Scraper/target/build/uil_scraper /path/to/folder
   uil_scraper mathematics --district --team-positions 100 # show top 100 results
   ```
 
-- MUTE (optional):
+## MUTE (optional):
 
   - Included by passing in `--mute`
   - Mutes the "completed" output lines when running so only the Individual and Team tables are displayed.
