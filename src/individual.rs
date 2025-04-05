@@ -194,8 +194,17 @@ impl Individual {
             let district = individual.district;
             if district.is_some() {
                 let region = district_as_region(district).unwrap_or(0);
+
+                let region_str: ColoredString = match region {
+                    1 => "R1".red(),
+                    2 => "R2".yellow(),
+                    3 => "R3".green(),
+                    4 => "R4".blue(),
+                    _ => "".into(),
+                };
+
                 let district = district.unwrap();
-                println!("{base} ({conference_str} D{district:<2} R{region} - {school})");
+                println!("{base} ({conference_str} D{district:<2} {region_str} - {school})");
             } else if let Some(region) = individual.region {
                 println!("{base} ({conference_str} R{region} - {school})");
             } else {

@@ -236,7 +236,19 @@ impl Team {
                     advance_status = "(Wildcard)".yellow();
                 }
 
-                println!("{base} {conference_str} - District {district:<2} {advance_status}");
+                let region = district_as_region(Some(district)).unwrap_or(0);
+
+                let region_str: ColoredString = match region {
+                    1 => "Region 1".red(),
+                    2 => "Region 2".yellow(),
+                    3 => "Region 3".green(),
+                    4 => "Region 4".blue(),
+                    _ => "".into(),
+                };
+
+                println!(
+                    "{base} {conference_str} - District {district:<2} {region_str} {advance_status}"
+                );
             } else if let Some(region) = team.region {
                 let mut advance_status = "".green();
                 if winning_teams.contains_key(&(region, conference))
