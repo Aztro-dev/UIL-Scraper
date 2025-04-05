@@ -14,7 +14,7 @@ A web scraper for the most of the Academic UIL events, including:
 
 # Credits
 
-This was originally inspired by a (significantly worse) Python script written by Warith that was eventually turned into a web design, which can be found [here](https://github.com/warithr621/uil-hub).
+This was originally inspired by a Python script written by Warith. While this Rust project builds off of the terminal-based UI concept, Warith's script was turned into a web design, which can be found [here](https://github.com/warithr621/uil-hub).
 
 # Pre-requisites
 
@@ -118,6 +118,7 @@ While this technically isn't a single variable, it is still required if you want
   - The `conference` can be in the form of a single number (`4`), a number and letter (`4a`) or number and uppercase letter (`4A`)
   - The `conference` can also be a range in the form of `<num>A-<num>A`, `<num>-<num>`, `<num><num>`, etc.
     - Basically it just needs two numbers both in the range 1-6
+  - By default, excluding this field will compile scores for all conferences with the given arguments (note putting `--conference` without any conference(s) will throw an error)
   - Examples:
 
   ```sh
