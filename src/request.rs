@@ -167,7 +167,7 @@ impl Subject {
         }
     }
 
-    pub fn list_options() {
+    pub fn _list_options() {
         println!("Subjects listed in {} are not fully supported", "red".red());
         // let accounting
     }

@@ -20,6 +20,14 @@ use clap::Parser;
 fn main() {
     let cli = Cli::parse();
 
+    if cli.district.is_none() && cli.region.is_none() && !cli.state {
+        println!(
+            "{}",
+            "You must specify the level using --district, --region, or --state".red()
+        );
+        return;
+    }
+
     let individual_results = Arc::new(Mutex::new(Vec::new()));
     let team_results = Arc::new(Mutex::new(Vec::new()));
 
