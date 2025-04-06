@@ -1,3 +1,4 @@
+use colored::Colorize;
 use minreq::Response;
 use scraper::{Html, Selector};
 
@@ -166,9 +167,10 @@ impl Subject {
         }
     }
 
-    // pub fn list_options() {
-    //     let accounting
-    // }
+    pub fn list_options() {
+        println!("Subjects listed in {} are not fully supported", "red".red());
+        // let accounting
+    }
 }
 
 pub fn district_as_region(district: Option<u8>) -> Option<u8> {

@@ -1,4 +1,5 @@
 use clap::Parser;
+use clap::Subcommand;
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -39,4 +40,16 @@ pub struct Cli {
     /// Mutes the district/region/state "completed" output lines
     #[arg(short, long)]
     pub mute: bool,
+
+    #[command(subcommand)]
+    command: Option<Commands>,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    List {
+        /// lists subjects
+        #[arg(short, long)]
+        list: bool,
+    },
 }
