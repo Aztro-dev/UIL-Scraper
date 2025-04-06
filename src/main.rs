@@ -1,3 +1,4 @@
+use chrono::Datelike;
 use std::sync::{Arc, Mutex};
 
 use colored::{ColoredString, Colorize};
@@ -18,21 +19,68 @@ use cli::*;
 use clap::Parser;
 
 fn main() {
-    let cli = Cli::parse();
-
-    if cli.district.is_none() && cli.region.is_none() && !cli.state {
-        println!(
-            "{}",
-            "You must specify the level using --district, --region, or --state".red()
-        );
-        return;
-    }
+    let mut cli = Cli::parse();
 
     let individual_results = Arc::new(Mutex::new(Vec::new()));
     let team_results = Arc::new(Mutex::new(Vec::new()));
 
     let subject = Subject::from_str(&cli.subject).unwrap();
-    let year = cli.year.unwrap_or(2025);
+    let year = cli
+        .year
+        .unwrap_or(chrono::Utc::now().year().try_into().unwrap());
+
+    while cli.district.is_none() && cli.region.is_none() && !cli.state {
+        println!(
+            "{}",
+            "You must specify the level using --district, --region, or --state".red()
+        );
+
+        let request = request::request(RequestFields {
+            district: None,
+            region: None,
+            state: true,
+            subject: subject.clone(),
+            conference: 1,
+            year,
+        });
+
+        if request.is_some() {
+            cli.state = true;
+            println!("Defaulting to state");
+            break;
+        }
+
+        let request = request::request(RequestFields {
+            district: None,
+            region: Some(1),
+            state: false,
+            subject: subject.clone(),
+            conference: 1,
+            year,
+        });
+
+        if request.is_some() {
+            cli.region = Some(0);
+            println!("Defaulting to region");
+            break;
+        }
+
+        let request = request::request(RequestFields {
+            district: Some(1),
+            region: None,
+            state: false,
+            subject: subject.clone(),
+            conference: 1,
+            year,
+        });
+
+        if request.is_some() {
+            cli.district = Some(0);
+            println!("Defaulting to district");
+            break;
+        }
+    }
+
     let conferences =
         RequestFields::parse_conference(cli.conference.unwrap_or(String::from("16"))).unwrap();
     for conference in conferences {

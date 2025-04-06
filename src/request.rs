@@ -85,6 +85,14 @@ pub fn request(fields: RequestFields) -> Option<String> {
     if response.status_code >= 400 {
         return None;
     }
+    // Results viewing for this season is not open.
+    if response
+        .as_str()
+        .ok()?
+        .contains("Please click a District to view results for.")
+    {
+        return None;
+    }
 
     Some(response.as_str().ok()?.to_string())
 }
