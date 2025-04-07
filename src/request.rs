@@ -77,9 +77,13 @@ pub fn request(fields: RequestFields) -> Option<String> {
     let subject: i8 = fields.subject.to_i8();
     let conference = fields.conference;
     let year = fields.year - 2008;
-    let url: String = format!(
-        "https://postings.speechwire.com/r-uil-academics.php?groupingid={subject}&Submit=View+postings&region={region}&district={district}&state={state}&conference={conference}&seasonid={year}"
-    );
+    let url: String = if fields.year > 2022 {
+        format!(
+            "https://postings.speechwire.com/r-uil-academics.php?groupingid={subject}&Submit=View+postings&region={region}&district={district}&state={state}&conference={conference}&seasonid={year}"
+        )
+    } else {
+        old_school(fields)
+    };
     let response: Response = minreq::get(url).with_timeout(1000).send().ok()?;
 
     if response.status_code >= 400 {
@@ -103,22 +107,41 @@ pub fn perform_scrape(fields: RequestFields) -> Option<(Vec<Individual>, Vec<Tea
 
     let request = request(fields.clone())?;
 
-    let document = Html::parse_document(request.as_str());
-    let table_selector = Selector::parse("table.ddprint").ok()?;
-    let mut table = document.select(&table_selector);
-    let individual_table = table.next()?;
+    if fields.year > 2022 {
+        let document = Html::parse_document(request.as_str());
+        let table_selector = Selector::parse("table.ddprint").ok()?;
+        let mut table = document.select(&table_selector);
+        let individual_table = table.next()?;
 
-    let team_table = table.next()?;
+        let team_table = table.next()?;
 
-    let mut individuals = Individual::parse_table(individual_table, &fields)?;
+        let mut individuals = Individual::parse_table(individual_table, &fields)?;
 
-    individual_results.append(&mut individuals);
+        individual_results.append(&mut individuals);
 
-    let mut teams = Team::parse_table(team_table, &fields)?;
+        let mut teams = Team::parse_table(team_table, &fields)?;
 
-    team_results.append(&mut teams);
+        team_results.append(&mut teams);
 
-    Some((individual_results, team_results))
+        return Some((individual_results, team_results));
+    } else {
+        let document = Html::parse_document(request.as_str());
+        let table_selector = Selector::parse("table.ddprint").ok()?;
+        let mut table = document.select(&table_selector);
+        let individual_table = table.next()?;
+
+        let team_table = table.next()?;
+
+        let mut individuals = Individual::parse_table(individual_table, &fields)?;
+
+        individual_results.append(&mut individuals);
+
+        let mut teams = Team::parse_table(team_table, &fields)?;
+
+        team_results.append(&mut teams);
+
+        return Some((individual_results, team_results));
+    }
 }
 
 #[allow(dead_code)]
@@ -196,4 +219,42 @@ pub fn district_as_region(district: Option<u8>) -> Option<u8> {
     }
 
     Some(region)
+}
+
+pub fn old_school(fields: RequestFields) -> String {
+    let level = if fields.district.is_some() {
+        "D"
+    } else if fields.region.is_some() {
+        "R"
+    } else {
+        "S"
+    };
+
+    let first = "https://utdirect.utexas.edu/nlogon/uil/vlcp_pub_arch.WBX?".to_string();
+    let second = format!(
+        "s_year={}&s_conference={}A&s_level_id={level}&s_level_nbr={}&",
+        fields.year,
+        fields.conference,
+        if fields.district.is_some() {
+            fields.district.unwrap().to_string()
+        } else if fields.region.is_some() {
+            fields.region.unwrap().to_string()
+        } else {
+            "".to_string()
+        }
+    )
+    .to_string();
+
+    let abbr = match fields.subject {
+        Subject::Accounting => "ACC",
+        Subject::ComputerScience => "CSC",
+        _ => "",
+    };
+
+    let third = format!(
+        "s_event_abbr={abbr}&s_submit_sw=X&s_year={}&s_conference={}A&s_level_id=S&s_level_nbr=&s_gender=&s_round=&s_dept=C&s_area_zone=",
+        fields.year, fields.conference
+    );
+
+    first + &second + &third
 }
