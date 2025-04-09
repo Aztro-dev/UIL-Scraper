@@ -42,14 +42,20 @@ pub struct Cli {
     pub mute: bool,
 
     #[command(subcommand)]
-    command: Option<Commands>,
+    pub command: Option<Commands>,
 }
 
-#[derive(Subcommand)]
-enum Commands {
+#[derive(Subcommand, Clone)]
+pub enum Commands {
     List {
         /// lists subjects
         #[arg(short, long)]
         list: bool,
+    },
+
+    Compare {
+        /// Compares two individuals in a subject
+        person_a: String,
+        person_b: String,
     },
 }

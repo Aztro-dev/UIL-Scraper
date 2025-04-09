@@ -16,6 +16,8 @@ use team::*;
 mod cli;
 use cli::*;
 
+// mod compare;
+
 use clap::Parser;
 
 fn main() {
@@ -28,6 +30,8 @@ fn main() {
     let year = cli
         .year
         .unwrap_or(chrono::Utc::now().year().try_into().unwrap());
+
+    let mute = cli.mute;
 
     while cli.district.is_none() && cli.region.is_none() && !cli.state {
         println!(
@@ -94,7 +98,7 @@ fn main() {
                 year,
             };
 
-            if let Some((mut individual, mut team)) = scrape(fields, cli.mute) {
+            if let Some((mut individual, mut team)) = scrape(fields, mute) {
                 // Lock and modify safely
                 {
                     let mut ind_lock = individual_results.lock().unwrap();
@@ -117,7 +121,7 @@ fn main() {
                 year,
             };
 
-            if let Some((mut individual, mut team)) = scrape(fields, cli.mute) {
+            if let Some((mut individual, mut team)) = scrape(fields, mute) {
                 // Lock and modify safely
                 {
                     let mut ind_lock = individual_results.lock().unwrap();
@@ -140,7 +144,7 @@ fn main() {
                     year,
                 };
 
-                if let Some((mut individual, mut team)) = scrape(fields, cli.mute) {
+                if let Some((mut individual, mut team)) = scrape(fields, mute) {
                     // Lock and modify safely
                     {
                         let mut ind_lock = individual_results.lock().unwrap();
@@ -163,7 +167,7 @@ fn main() {
                 year,
             };
 
-            if let Some((mut individual, mut team)) = scrape(fields, cli.mute) {
+            if let Some((mut individual, mut team)) = scrape(fields, mute) {
                 // Lock and modify safely
                 {
                     let mut ind_lock = individual_results.lock().unwrap();
@@ -186,7 +190,7 @@ fn main() {
                     year,
                 };
 
-                if let Some((mut individual, mut team)) = scrape(fields, cli.mute) {
+                if let Some((mut individual, mut team)) = scrape(fields, mute) {
                     // Lock and modify safely
                     {
                         let mut ind_lock = individual_results.lock().unwrap();
@@ -198,6 +202,17 @@ fn main() {
                     }
                 }
             });
+        }
+    }
+
+    if cli.command.is_some() {
+        if let Commands::Compare { person_a, person_b } = cli.command.clone().unwrap() {
+            individual_results
+                .lock()
+                .unwrap()
+                .retain(|x| x.name == person_a || x.name == person_b);
+            Individual::display_results(individual_results.lock().unwrap().clone(), 2);
+            return;
         }
     }
 
