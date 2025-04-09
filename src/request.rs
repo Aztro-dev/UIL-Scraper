@@ -123,10 +123,10 @@ pub fn perform_scrape(fields: RequestFields) -> Option<(Vec<Individual>, Vec<Tea
 
         team_results.append(&mut teams);
 
-        return Some((individual_results, team_results));
+        Some((individual_results, team_results))
     } else {
         let document = Html::parse_document(request.as_str());
-        let table_selector = Selector::parse("table.ddprint").ok()?;
+        let table_selector = Selector::parse("table").ok()?;
         let mut table = document.select(&table_selector);
         let individual_table = table.next()?;
 
@@ -140,7 +140,7 @@ pub fn perform_scrape(fields: RequestFields) -> Option<(Vec<Individual>, Vec<Tea
 
         team_results.append(&mut teams);
 
-        return Some((individual_results, team_results));
+        Some((individual_results, team_results))
     }
 }
 
