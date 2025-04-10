@@ -5,12 +5,11 @@ use crate::team::Team;
 use colored::ColoredString;
 use colored::Colorize;
 use rayon::prelude::*;
-use std::ops::Range;
 use std::sync::{Arc, Mutex};
 
 pub fn scrape_subject(
     request_fields: RequestFields,
-    conferences: Range<u8>,
+    conferences: Vec<u8>,
     mute: bool,
 ) -> Option<(Vec<Individual>, Vec<Team>)> {
     let district = request_fields.district;

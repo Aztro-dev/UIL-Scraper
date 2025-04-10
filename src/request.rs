@@ -15,8 +15,18 @@ pub struct RequestFields {
 }
 
 impl RequestFields {
-    pub fn parse_conference(mut string: String) -> Option<std::ops::Range<u8>> {
+    pub fn parse_range(mut string: String) -> Option<Vec<u8>> {
+        if string.is_empty() {
+            return None;
+        }
         string = string.to_lowercase();
+        if string.contains(",") {
+            let mut split = string.split(",");
+            let left_num = split.next().unwrap().parse::<u8>().ok()?;
+            let right_num = split.next().unwrap().parse::<u8>().ok()?;
+            let vec = vec![left_num, right_num];
+            return Some(vec);
+        }
         string.retain(|c| c.is_ascii_digit());
         let bytes = string.as_bytes();
         // char to u8
@@ -28,24 +38,26 @@ impl RequestFields {
             if left_digit > 6 {
                 return None;
             }
-            return Some(std::ops::Range {
-                start: left_digit,
-                end: left_digit + 1,
-            });
+
+            let vec = vec![left_digit];
+            return Some(vec);
         }
         let right_digit = bytes[1] - 48;
         let start = std::cmp::min(left_digit, right_digit);
         let end = std::cmp::max(left_digit, right_digit);
+
         if start < 1 {
             return None;
         }
         if end > 6 {
             return None;
         }
-        Some(std::ops::Range::<u8> {
-            start,
-            end: end + 1,
-        })
+
+        let mut vec = Vec::new();
+        for i in start..=end {
+            vec.push(i);
+        }
+        Some(vec)
     }
     fn get_district(&self) -> String {
         if self.district.is_none() {

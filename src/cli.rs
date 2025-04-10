@@ -47,15 +47,17 @@ pub struct Cli {
 
 #[derive(Subcommand, Clone)]
 pub enum Commands {
-    List {
-        /// lists subjects
-        #[arg(short, long)]
-        list: bool,
-    },
-
     Compare {
         /// Compares two individuals in a subject
         person_a: String,
         person_b: String,
+        #[arg(short, long)]
+        conferences: String,
+        #[arg(short, long)]
+        districts: Option<String>,
+        #[arg(short, long)]
+        regions: Option<String>,
+        #[arg(short, long)]
+        state: Option<bool>,
     },
 }
