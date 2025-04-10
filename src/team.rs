@@ -64,6 +64,7 @@ impl Team {
             }
             let mut school = cells[1].clone();
             let _ = school.split_off(school.find(&span_text).unwrap());
+            school = school.trim().to_string();
             let district = fields.district;
             let region = fields.region;
             let misc = match fields.clone().subject {

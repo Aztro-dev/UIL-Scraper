@@ -76,7 +76,7 @@ impl Individual {
                 continue;
             }
             let school = cells[1].clone();
-            let name = &cells[2];
+            let name = &cells[2].trim().to_string();
             let individual_misc: IndividualMisc = match fields.clone().subject {
                 Subject::Science => IndividualMisc::Science {
                     biology: cells[4].parse::<i16>().unwrap_or(0),
