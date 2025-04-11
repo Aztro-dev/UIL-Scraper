@@ -202,7 +202,7 @@ impl Team {
                     "N/A".len(),
                 );
                 base.input = format!("{} (prog {:>prog_length$})", base.input, prog);
-            } else if matches!(subject, Subject::ComputerScience { .. }) {
+            } else if matches!(subject, Subject::ComputerScience) {
                 let prog_length = std::cmp::max(
                     first.get_prog().unwrap().checked_ilog10().unwrap_or(0) as usize + 1,
                     "N/A".len(),
