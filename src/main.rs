@@ -119,7 +119,7 @@ fn main() {
         return;
     }
 
-    let (mut individual_results, team_results) = results.unwrap();
+    let (mut individual_results, mut team_results) = results.unwrap();
 
     if cli.command.is_some() {
         let Commands::Compare {
@@ -132,48 +132,54 @@ fn main() {
         } = cli.command.clone().unwrap();
         {
             individual_results.retain(|x| x.name == person_a || x.name == person_b);
-            Individual::display_results(individual_results.clone(), 2);
-            return;
+            individual_results.dedup_by(|x, y| x.name.eq_ignore_ascii_case(y.name.as_str()));
+            team_results.retain(|x| x.school == person_a || x.school == person_b);
+            team_results.dedup_by(|x, y| x.school == y.school);
+            println!("{:?}", individual_results);
         }
     }
 
-    println!("Individual Total Scores:");
-    Individual::display_results(
-        individual_results.clone(),
-        cli.individual_positions.unwrap_or(25),
-    );
-    println!();
-    if let Subject::Science = subject {
-        let mut biology = individual_results.clone();
-        biology.retain_mut(|x| {
-            x.score = x.get_biology().unwrap();
-            true
-        });
-        let mut chemistry = individual_results.clone();
-        chemistry.retain_mut(|x| {
-            x.score = x.get_chemistry().unwrap();
-            true
-        });
-        let mut physics = individual_results.clone();
-        physics.retain_mut(|x| {
-            x.score = x.get_physics().unwrap();
-            true
-        });
-        println!("Individual Biology Scores:");
-        Individual::display_results(biology, cli.individual_positions.unwrap_or(25));
+    if !individual_results.is_empty() {
+        println!("Individual Total Scores:");
+        Individual::display_results(
+            individual_results.clone(),
+            cli.individual_positions.unwrap_or(25),
+        );
         println!();
-        println!("Individual Chemistry Scores:");
-        Individual::display_results(chemistry, cli.individual_positions.unwrap_or(25));
-        println!();
-        println!("Individual Physics Scores:");
-        Individual::display_results(physics, cli.individual_positions.unwrap_or(25));
+        if let Subject::Science = subject {
+            let mut biology = individual_results.clone();
+            biology.retain_mut(|x| {
+                x.score = x.get_biology().unwrap();
+                true
+            });
+            let mut chemistry = individual_results.clone();
+            chemistry.retain_mut(|x| {
+                x.score = x.get_chemistry().unwrap();
+                true
+            });
+            let mut physics = individual_results.clone();
+            physics.retain_mut(|x| {
+                x.score = x.get_physics().unwrap();
+                true
+            });
+            println!("Individual Biology Scores:");
+            Individual::display_results(biology, cli.individual_positions.unwrap_or(25));
+            println!();
+            println!("Individual Chemistry Scores:");
+            Individual::display_results(chemistry, cli.individual_positions.unwrap_or(25));
+            println!();
+            println!("Individual Physics Scores:");
+            Individual::display_results(physics, cli.individual_positions.unwrap_or(25));
+        }
     }
-    println!("Team Scores:");
-    Team::display_results(
-        team_results.to_vec(),
-        subject,
-        cli.team_positions.unwrap_or(25),
-    );
+    if !team_results.is_empty() {
+        println!("Team Scores:");
+        Team::display_results(
+            team_results.to_vec(),
+            subject,
+            cli.team_positions.unwrap_or(25),
+        );
+    }
 }
 
 pub fn find_level(cli: &mut Cli) {
