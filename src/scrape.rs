@@ -9,7 +9,7 @@ use std::sync::{Arc, Mutex};
 
 pub fn scrape_subject(
     request_fields: RequestFields,
-    conferences: Vec<u8>,
+    mut conferences: Vec<u8>,
     mute: bool,
 ) -> Option<(Vec<Individual>, Vec<Team>)> {
     let district = request_fields.district;
@@ -29,6 +29,8 @@ pub fn scrape_subject(
         conference: 0,
         year,
     };
+
+    conferences.dedup();
 
     for conference in conferences {
         fields.conference = conference;

@@ -7,6 +7,7 @@ edition = "2024"
 chrono = "0.4.40"
 clap = { version = "4.5.34", features = ["derive"] }
 colored = "3.0.0"
+itertools = "0.14.0"
 minreq = { version = "2.13.3", features = ["punycode", "https"]}
 rayon = "1.10.0"
 scraper = "0.23.1"

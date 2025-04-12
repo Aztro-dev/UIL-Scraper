@@ -111,6 +111,8 @@ impl Individual {
             b_score.cmp(&a_score)
         });
 
+        results.dedup();
+
         if positions != 0 {
             results.resize(
                 cmp::min(results.len(), positions),

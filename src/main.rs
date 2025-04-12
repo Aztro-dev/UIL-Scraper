@@ -54,7 +54,7 @@ fn main() {
             conferences,
             districts,
             regions,
-            state,
+            state: _,
         } = cli.command.clone().unwrap();
         let conferences = RequestFields::parse_range(conferences)
             .expect("Conferences entered in the wrong order");
@@ -70,42 +70,37 @@ fn main() {
         let districts_parsed = RequestFields::parse_range(districts.unwrap_or("".to_string()));
         let regions_parsed = RequestFields::parse_range(regions.unwrap_or("".to_string()));
 
-        if districts_parsed.is_some() {
+        let (level_1, level_2) = if districts_parsed.is_some() {
             let mut districts = districts_parsed.clone().unwrap();
             districts.sort();
             fields.district = Some(districts[0]);
-        }
-        if regions_parsed.is_some() {
+            (districts[0], districts[1])
+        } else if regions_parsed.is_some() {
             let mut regions = regions_parsed.clone().unwrap();
             regions.sort();
             fields.region = Some(regions[0]);
-        }
-        if state.unwrap_or(false) {
-            fields.state = state.unwrap();
-        }
+            (regions[0], regions[1])
+        } else {
+            fields.state = true;
+            (0, 0)
+        };
 
         let (mut individual_results, mut team_results) =
             scrape_subject(fields.clone(), conferences.clone(), cli.mute)
                 .expect("No results found");
 
-        if districts_parsed.is_some() {
-            let mut districts = districts_parsed.unwrap();
-            districts.sort();
-            fields.district = Some(districts[1]);
-        }
-        if regions_parsed.is_some() {
-            let mut regions = regions_parsed.unwrap();
-            regions.sort();
-            fields.district = Some(regions[1]);
-        }
-        if state.unwrap_or(false) {
-            fields.state = state.unwrap();
-        }
+        if level_1 != level_2 {
+            if fields.district.is_some() {
+                fields.district = Some(level_2);
+            } else if fields.region.is_some() {
+                fields.region = Some(level_2);
+            }
+            let mut results =
+                scrape_subject(fields, conferences, cli.mute).expect("No results found");
 
-        let mut results = scrape_subject(fields, conferences, cli.mute).expect("No results found");
-
-        individual_results.append(&mut results.0);
-        team_results.append(&mut results.1);
+            individual_results.append(&mut results.0);
+            team_results.append(&mut results.1);
+        }
 
         if individual_results.is_empty() || team_results.is_empty() {
             None
@@ -132,10 +127,7 @@ fn main() {
         } = cli.command.clone().unwrap();
         {
             individual_results.retain(|x| x.name == person_a || x.name == person_b);
-            individual_results.dedup_by(|x, y| x.name.eq_ignore_ascii_case(y.name.as_str()));
             team_results.retain(|x| x.school == person_a || x.school == person_b);
-            team_results.dedup_by(|x, y| x.school == y.school);
-            println!("{:?}", individual_results);
         }
     }
 
