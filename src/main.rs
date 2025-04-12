@@ -36,93 +36,108 @@ fn main() {
     let conferences =
         RequestFields::parse_range(cli.conference.unwrap_or(String::from("16"))).unwrap();
 
-    let results = if cli.command.is_none() && subject != Subject::Rankings {
-        scrape_subject(
-            RequestFields {
-                district: cli.district,
-                region: cli.region,
-                state: cli.state,
-                subject: subject.clone(),
-                conference: 0,
-                year,
-            },
-            conferences.clone(),
-            cli.mute,
-        )
-    } else if subject == Subject::Rankings {
-        overall::rankings(
-            RequestFields {
-                district: cli.district,
-                region: cli.region,
-                state: cli.state,
-                subject: subject.clone(),
-                conference: 0,
-                year,
-            },
-            conferences.clone(),
-            cli.mute,
-        )
-    } else {
-        let Commands::Compare {
-            person_a: _,
-            person_b: _,
-            conferences,
-            districts,
-            regions,
-            state: _,
-        } = cli.command.clone().unwrap();
-        let conferences = RequestFields::parse_range(conferences)
-            .expect("Conferences entered in the wrong order");
-        let mut fields = RequestFields {
-            district: cli.district,
-            region: cli.region,
-            state: cli.state,
-            subject: subject.clone(),
-            conference: 0,
-            year,
-        };
-
-        let districts_parsed = RequestFields::parse_range(districts.unwrap_or("".to_string()));
-        let regions_parsed = RequestFields::parse_range(regions.unwrap_or("".to_string()));
-
-        let (level_1, level_2) = if districts_parsed.is_some() {
-            let mut districts = districts_parsed.clone().unwrap();
-            districts.sort();
-            fields.district = Some(districts[0]);
-            (districts[0], districts[1])
-        } else if regions_parsed.is_some() {
-            let mut regions = regions_parsed.clone().unwrap();
-            regions.sort();
-            fields.region = Some(regions[0]);
-            (regions[0], regions[1])
+    let results =
+        if cli.command.is_none() && subject != Subject::Rankings && subject != Subject::Sweepstakes
+        {
+            scrape_subject(
+                RequestFields {
+                    district: cli.district,
+                    region: cli.region,
+                    state: cli.state,
+                    subject: subject.clone(),
+                    conference: 0,
+                    year,
+                },
+                conferences.clone(),
+                cli.mute,
+            )
+        } else if subject == Subject::Rankings {
+            overall::rankings(
+                RequestFields {
+                    district: cli.district,
+                    region: cli.region,
+                    state: cli.state,
+                    subject: subject.clone(),
+                    conference: 0,
+                    year,
+                },
+                conferences.clone(),
+                cli.mute,
+            )
+        } else if subject == Subject::Sweepstakes {
+            overall::sweepstakes(
+                RequestFields {
+                    district: cli.district,
+                    region: cli.region,
+                    state: cli.state,
+                    subject: subject.clone(),
+                    conference: 0,
+                    year,
+                },
+                conferences.clone(),
+                cli.mute,
+            )
         } else {
-            fields.state = true;
-            (0, 0)
-        };
+            let Commands::Compare {
+                person_a: _,
+                person_b: _,
+                conferences,
+                districts,
+                regions,
+                state: _,
+            } = cli.command.clone().unwrap();
+            let conferences = RequestFields::parse_range(conferences)
+                .expect("Conferences entered in the wrong order");
+            let mut fields = RequestFields {
+                district: cli.district,
+                region: cli.region,
+                state: cli.state,
+                subject: subject.clone(),
+                conference: 0,
+                year,
+            };
 
-        let (mut individual_results, mut team_results) =
-            scrape_subject(fields.clone(), conferences.clone(), cli.mute)
-                .expect("No results found");
+            let districts_parsed = RequestFields::parse_range(districts.unwrap_or("".to_string()));
+            let regions_parsed = RequestFields::parse_range(regions.unwrap_or("".to_string()));
 
-        if level_1 != level_2 {
-            if fields.district.is_some() {
-                fields.district = Some(level_2);
-            } else if fields.region.is_some() {
-                fields.region = Some(level_2);
+            let (level_1, level_2) = if districts_parsed.is_some() {
+                let mut districts = districts_parsed.clone().unwrap();
+                districts.sort();
+                fields.district = Some(districts[0]);
+                (districts[0], districts[1])
+            } else if regions_parsed.is_some() {
+                let mut regions = regions_parsed.clone().unwrap();
+                regions.sort();
+                fields.region = Some(regions[0]);
+                (regions[0], regions[1])
+            } else {
+                fields.state = true;
+                (0, 0)
+            };
+
+            let (mut individual_results, mut team_results) =
+                scrape_subject(fields.clone(), conferences.clone(), cli.mute)
+                    .expect("No results found");
+
+            if level_1 != level_2 {
+                if fields.district.is_some() {
+                    fields.district = Some(level_2);
+                } else if fields.region.is_some() {
+                    fields.region = Some(level_2);
+                }
+                let mut results =
+                    scrape_subject(fields, conferences, cli.mute).expect("No results found");
+
+                individual_results.append(&mut results.0);
+                team_results.append(&mut results.1);
             }
-            let mut results =
-                scrape_subject(fields, conferences, cli.mute).expect("No results found");
 
-            individual_results.append(&mut results.0);
-            team_results.append(&mut results.1);
-        }
-
-        if individual_results.is_empty() || team_results.is_empty() {
-            None
-        } else {
-            Some((individual_results, team_results))
-        }
-    };
+            if individual_results.is_empty() || team_results.is_empty() {
+                None
+            } else {
+                Some((individual_results, team_results))
+            }
+        };
 
     if results.is_none() {
         println!("{}", "Didn't return any results".red());
@@ -147,6 +162,16 @@ fn main() {
     }
 
     if !individual_results.is_empty() {
+        if subject == Subject::Sweepstakes {
+            individual_results = individual_results
+                .iter()
+                .map(|individual| {
+                    let mut copy = individual.clone();
+                    copy.score = copy.points as i16;
+                    copy
+                })
+                .collect();
+        }
         println!("Individual Total Scores:");
         Individual::display_results(
             individual_results.clone(),
@@ -180,6 +205,22 @@ fn main() {
         }
     }
     if !team_results.is_empty() {
+        if subject == Subject::Sweepstakes {
+            team_results = team_results
+                .iter()
+                .map(|team| {
+                    let mut copy = team.clone();
+                    for indiv in &individual_results {
+                        if indiv.school == copy.school {
+                            copy.points += indiv.points;
+                        }
+                    }
+                    copy.score = copy.points as i16;
+                    copy.misc = TeamMisc::Normal;
+                    copy
+                })
+                .collect();
+        }
         println!("Team Scores:");
         Team::display_results(
             team_results.to_vec(),

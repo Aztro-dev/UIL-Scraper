@@ -4,7 +4,7 @@ use std::cmp;
 
 use crate::request::{RequestFields, Subject, district_as_region};
 
-#[derive(Clone, Eq, PartialEq, PartialOrd, Debug)]
+#[derive(Clone, PartialEq, PartialOrd, Debug)]
 pub struct Individual {
     pub name: String,
     pub school: String,
@@ -12,6 +12,7 @@ pub struct Individual {
     pub district: Option<u8>,
     pub region: Option<u8>,
     pub score: i16,
+    pub points: f32,
     pub misc: IndividualMisc,
 }
 
@@ -58,11 +59,33 @@ impl Individual {
         }
     }
 
+    pub fn get_ties(sorted: Vec<Self>) -> Vec<Vec<Self>> {
+        let mut groups: Vec<Vec<Self>> = Vec::new();
+        let mut current_group: Vec<Self> = Vec::new();
+
+        for (i, individual) in sorted.iter().enumerate() {
+            if i == 0 || individual.score == sorted[i - 1].score {
+                current_group.push(individual.clone());
+            } else {
+                groups.push(current_group);
+                current_group = vec![individual.clone()];
+            }
+        }
+
+        if !current_group.is_empty() {
+            groups.push(current_group);
+        }
+
+        groups
+    }
+
     pub fn parse_table(table: ElementRef, fields: &RequestFields) -> Option<Vec<Self>> {
         let mut results: Vec<Self> = Vec::new();
 
         let row_selector = Selector::parse("tr").ok()?;
         let cell_selector = Selector::parse("td").ok()?;
+
+        let mut points_index = 0;
 
         for row in table.select(&row_selector) {
             let cells: Vec<String> = row
@@ -72,6 +95,12 @@ impl Individual {
 
             let place = &cells[0];
             if place == "Place" {
+                for (index, column) in cells.iter().enumerate() {
+                    if column == "Points" {
+                        points_index = index;
+                        break;
+                    }
+                }
                 // We continue because this row doesn't contain any data
                 continue;
             }
@@ -97,6 +126,7 @@ impl Individual {
                 }]
                 .parse::<i16>()
                 .unwrap_or(0),
+                points: cells[points_index].parse::<f32>().unwrap_or(0.0),
                 misc: individual_misc,
             };
             results.push(individual);
@@ -123,6 +153,7 @@ impl Individual {
                     region: None,
                     school: String::new(),
                     name: String::new(),
+                    points: 0.0,
                     misc: IndividualMisc::Normal,
                 },
             );

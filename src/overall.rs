@@ -25,7 +25,7 @@ pub fn rankings(
     for subject in supported_subjects {
         let mut fields = request_fields.clone();
         fields.subject = subject;
-        let results = scrape_subject(fields, conferences.clone(), mute);
+        let results = scrape_subject(fields.clone(), conferences.clone(), mute);
         if results.is_none() {
             continue;
         }
@@ -87,12 +87,134 @@ pub fn rankings(
                 team_results.push(team);
             }
         }
-        use std::{thread, time};
 
-        println!("Pausing to (hopefully) prevent rate limiting");
-        let second = time::Duration::from_millis(1000);
+        if fields.district.is_some() {
+            use std::{thread, time};
 
-        thread::sleep(second);
+            println!("Pausing to (hopefully) prevent rate limiting");
+            let second = time::Duration::from_millis(500);
+
+            thread::sleep(second);
+        }
+    }
+    Some((individual_results, team_results))
+}
+
+pub fn sweepstakes(
+    request_fields: RequestFields,
+    conferences: Vec<u8>,
+    mute: bool,
+) -> Option<(Vec<Individual>, Vec<Team>)> {
+    let supported_subjects = [
+        Subject::Accounting,
+        Subject::ComputerApplications,
+        Subject::CurrentEvents,
+        Subject::ComputerScience,
+        Subject::Calculator,
+        Subject::Spelling,
+        Subject::Science,
+        Subject::SocialStudies,
+        Subject::Mathematics,
+        Subject::NumberSense,
+    ];
+    let mut individual_results: Vec<Individual> = Vec::new();
+    let mut team_results: Vec<Team> = Vec::new();
+    for subject in supported_subjects {
+        let mut fields = request_fields.clone();
+        fields.subject = subject.clone();
+        let results = scrape_subject(fields.clone(), conferences.clone(), mute);
+        if results.is_none() {
+            continue;
+        }
+        let (mut indiv, mut team) = results.unwrap();
+
+        indiv.sort_by(|a, b| {
+            let a_score = a.score;
+            let b_score = b.score;
+            b_score.cmp(&a_score)
+        });
+        team.sort_by(|a, b| {
+            let a_score = a.score;
+            let b_score = b.score;
+            b_score.cmp(&a_score)
+        });
+
+        if indiv.is_empty() {
+            continue;
+        }
+
+        let indiv_ties = Individual::get_ties(indiv.clone());
+        let team_ties = Team::get_ties(team.clone());
+
+        const INDIV_POINTS: [f32; 6] = [15.0, 12.0, 10.0, 8.0, 6.0, 4.0];
+        const TEAM_POINTS: [f32; 2] = [10.0, 5.0];
+        const TEAM_CS_POINTS: [f32; 3] = [20.0, 16.0, 12.0];
+
+        for indiv in indiv.iter_mut() {
+            let copy = indiv.clone();
+            for i in 0..std::cmp::min(indiv_ties.len(), 6) {
+                let group = indiv_ties[i].clone();
+                if group.contains(&&copy) {
+                    let mut sum = 0.0;
+                    for ii in i..std::cmp::min(i + group.len(), 6) {
+                        sum += INDIV_POINTS[ii];
+                    }
+                    indiv.points = sum / group.len() as f32;
+                }
+            }
+            let mut found = false;
+            for result in &mut individual_results.iter_mut() {
+                if result.name == indiv.name {
+                    found = true;
+                    result.points += indiv.points;
+                }
+            }
+            if !found {
+                individual_results.push(indiv.clone());
+            }
+        }
+
+        for mut team in team {
+            let copy = team.clone();
+            let positions = if subject != Subject::ComputerScience {
+                2
+            } else {
+                3
+            };
+            for i in 0..std::cmp::min(team_ties.len(), positions) {
+                let group = team_ties[i].clone();
+                if group.contains(&&copy) {
+                    let mut sum = 0.0;
+                    for ii in i..std::cmp::min(i + group.len(), positions) {
+                        if positions == 2 {
+                            sum += TEAM_POINTS[ii];
+                        } else {
+                            sum += TEAM_CS_POINTS[ii];
+                        }
+                    }
+                    team.points = sum / group.len() as f32;
+                }
+            }
+            let mut found = false;
+            for result in &mut team_results {
+                if result.school == team.school {
+                    found = true;
+                    result.points += team.points;
+                }
+            }
+            if !found {
+                team_results.push(team);
+            }
+        }
+
+        if fields.district.is_some() {
+            use std::{thread, time};
+
+            println!("Pausing to (hopefully) prevent rate limiting");
+            let second = time::Duration::from_millis(500);
+
+            thread::sleep(second);
+        }
     }
     Some((individual_results, team_results))
 }

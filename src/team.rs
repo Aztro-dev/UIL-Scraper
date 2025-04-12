@@ -4,13 +4,14 @@ use std::{cmp, collections::HashMap};
 
 use crate::request::{RequestFields, Subject, district_as_region};
 
-#[derive(Clone, Eq, PartialEq, PartialOrd, Debug)]
+#[derive(Clone, PartialEq, PartialOrd, Debug)]
 pub struct Team {
     pub school: String,
     pub score: i16,
     pub conference: u8,
     pub district: Option<u8>,
     pub region: Option<u8>,
+    pub points: f32,
     pub misc: TeamMisc,
 }
 
@@ -29,12 +30,34 @@ impl Team {
         }
     }
 
+    pub fn get_ties(sorted: Vec<Self>) -> Vec<Vec<Self>> {
+        let mut groups: Vec<Vec<Self>> = Vec::new();
+        let mut current_group: Vec<Self> = Vec::new();
+
+        for (i, team) in sorted.iter().enumerate() {
+            if i == 0 || team.score == sorted[i - 1].score {
+                current_group.push(team.clone());
+            } else {
+                groups.push(current_group);
+                current_group = vec![team.clone()];
+            }
+        }
+
+        if !current_group.is_empty() {
+            groups.push(current_group);
+        }
+
+        groups
+    }
+
     pub fn parse_table(table: ElementRef, fields: &RequestFields) -> Option<Vec<Self>> {
         let mut results: Vec<Self> = Vec::new();
 
         let row_selector = Selector::parse("tr").ok()?;
         let cell_selector = Selector::parse("td").ok()?;
         let span_selector = Selector::parse("span").unwrap();
+
+        let mut points_index = 0;
 
         for row in table.select(&row_selector) {
             let cells: Vec<String> = row
@@ -43,6 +66,12 @@ impl Team {
                 .collect();
             let place = &cells[0];
             if place == "Place" {
+                for (index, column) in cells.iter().enumerate() {
+                    if column == "Points" {
+                        points_index = index;
+                        break;
+                    }
+                }
                 // We continue because this row doesn't contain any data
                 continue;
             }
@@ -77,12 +106,14 @@ impl Team {
                 Subject::ComputerScience => cells[3].parse::<i16>().unwrap_or(0),
                 _ => cells[2].parse::<i16>().unwrap_or(0),
             };
+            let points = cells[points_index].parse::<f32>().unwrap_or(0.0);
             let team: Team = Team {
                 score,
                 school,
                 conference: fields.clone().conference,
                 district,
                 region,
+                points,
                 misc,
             };
 
@@ -109,6 +140,7 @@ impl Team {
                     conference: 0,
                     district: None,
                     region: None,
+                    points: 0.0,
                     misc: TeamMisc::Normal,
                 },
             );

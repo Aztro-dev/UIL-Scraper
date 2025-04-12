@@ -4,7 +4,7 @@ use scraper::{Html, Selector};
 
 use crate::{individual::Individual, team::Team};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct RequestFields {
     pub district: Option<u8>,
     pub region: Option<u8>,
@@ -157,7 +157,7 @@ pub fn perform_scrape(fields: RequestFields) -> Option<(Vec<Individual>, Vec<Tea
 }
 
 #[allow(dead_code)]
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Subject {
     Accounting,
     // NOTE: computer applications isn't fully supported
