@@ -115,8 +115,9 @@ pub fn scrape(fields: RequestFields, mute: bool) -> Option<(Vec<Individual>, Vec
     } else {
         return None;
     }
-    let unavailable: ColoredString = format!("{conference}A {level} unavailable").red();
-    let completed: ColoredString = format!("{conference}A {level} completed").green();
+    let subject = fields.subject.to_string();
+    let unavailable: ColoredString = format!("{conference}A {subject} {level} unavailable").red();
+    let completed: ColoredString = format!("{conference}A {subject} {level} completed").green();
 
     let mut individual_results: Vec<Individual> = Vec::new();
     let mut team_results: Vec<Team> = Vec::new();

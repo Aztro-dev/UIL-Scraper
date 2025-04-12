@@ -17,6 +17,8 @@ use cli::*;
 mod scrape;
 use scrape::scrape_subject;
 
+mod overall;
+
 use clap::Parser;
 
 fn main() {
@@ -34,8 +36,21 @@ fn main() {
     let conferences =
         RequestFields::parse_range(cli.conference.unwrap_or(String::from("16"))).unwrap();
 
-    let results = if cli.command.is_none() {
+    let results = if cli.command.is_none() && subject != Subject::Rankings {
         scrape_subject(
+            RequestFields {
+                district: cli.district,
+                region: cli.region,
+                state: cli.state,
+                subject: subject.clone(),
+                conference: 0,
+                year,
+            },
+            conferences.clone(),
+            cli.mute,
+        )
+    } else if subject == Subject::Rankings {
+        overall::rankings(
             RequestFields {
                 district: cli.district,
                 region: cli.region,

@@ -157,7 +157,7 @@ pub fn perform_scrape(fields: RequestFields) -> Option<(Vec<Individual>, Vec<Tea
 }
 
 #[allow(dead_code)]
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 pub enum Subject {
     Accounting,
     // NOTE: computer applications isn't fully supported
@@ -174,6 +174,8 @@ pub enum Subject {
     Science,
     // NOTE: sweepstakes isn't fully supported
     Sweepstakes,
+    /// Custom rankings by my glorious king Justin Nguyen
+    Rankings,
 }
 
 impl Subject {
@@ -190,6 +192,7 @@ impl Subject {
             Subject::NumberSense => 11,
             Subject::Science => 12,
             Subject::Sweepstakes => -1,
+            Subject::Rankings => -1,
         }
     }
 
@@ -206,7 +209,24 @@ impl Subject {
             "number_sense" | "ns" => Some(Self::NumberSense),
             "science" | "sci" => Some(Self::Science),
             "sweepstakes" | "overall" => Some(Self::Sweepstakes),
+            "rank" | "rankings" => Some(Self::Rankings),
             _ => None,
+        }
+    }
+
+    pub fn to_string(&self) -> &str {
+        match self {
+            Self::Accounting => "Accounting",
+            Self::ComputerApplications => "Computer Applications",
+            Self::CurrentEvents => "Current Events",
+            Self::ComputerScience => "Computer Science",
+            Self::Calculator => "Calculator",
+            Self::Spelling => "Spelling",
+            Self::Science => "Science",
+            Self::SocialStudies => "Social Studies",
+            Self::Mathematics => "Mathematics",
+            Self::NumberSense => "Number Sense",
+            _ => "",
         }
     }
 

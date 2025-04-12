@@ -200,7 +200,7 @@ impl Team {
 
             if let Some(prog) = team.get_prog() {
                 let prog_length = std::cmp::max(
-                    first.get_prog().unwrap().checked_ilog10().unwrap_or(0) as usize + 1,
+                    first.get_prog().unwrap_or(0).checked_ilog10().unwrap_or(0) as usize + 1,
                     "N/A".len(),
                 );
                 base.input = format!("{} (prog {:>prog_length$})", base.input, prog);
