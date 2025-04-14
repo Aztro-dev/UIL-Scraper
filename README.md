@@ -73,6 +73,7 @@ You must specify a subject that is from the subject list, but in a certain manne
   "social_studies" => Social Studies,
   "spelling" or "spell" => Spelling,
   "sweepstakes" or "overall" => Sweepstakes,
+  "rank" or "rankings" => Rankings, (custom rankings for overall academic events)
   ```
 
 ## LEVEL
@@ -172,3 +173,20 @@ While this technically isn't a single variable, it is still required if you want
   ```sh
   uil_scraper mathematics --district --mute
   ```
+
+## Commands:
+  - COMPARE:
+    - PERSON1 (required):
+      - A string defining the name of the individual or school you want to compare
+      - Example: "Warith Rahman"
+    - PERSON2 (required):
+      - A string defining the name of other the individual or school you want to compare
+      - Example: "Anthony Xu"
+    - CONFERENCES (required):
+      - A pair of values separated by a comma that defines the conferences of each of the people
+      - Example: `--conferences 1A,4A`
+    - LEVEL (required):
+      - A pair of values separated by a comma that defines the districts/region of each of the people, or state if it is at the state competition
+      - Example: `--districts 11,4`
+      - Example: `--regions 1,2`
+      - Example: `--states`
