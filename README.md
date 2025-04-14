@@ -186,7 +186,6 @@ While this technically isn't a single variable, it is still required if you want
       - A pair of values separated by a comma that defines the conferences of each of the people
       - Example: `--conferences 1A,4A`
     - LEVEL (required):
-      - A pair of values separated by a comma that defines the districts/region of each of the people, or state if it is at the state competition
+      - A pair of values separated by a comma that defines the districts/region of each of the people
       - Example: `--districts 11,4`
       - Example: `--regions 1,2`
-      - Example: `--states`
