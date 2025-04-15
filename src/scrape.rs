@@ -2,10 +2,10 @@ use crate::Individual;
 use crate::request;
 use crate::request::RequestFields;
 use crate::team::Team;
-use colored::ColoredString;
 use colored::Colorize;
 use rayon::prelude::*;
 use std::sync::{Arc, Mutex};
+use supports_color::Stream;
 
 pub fn scrape_subject(
     request_fields: RequestFields,
@@ -116,8 +116,25 @@ pub fn scrape(fields: RequestFields, mute: bool) -> Option<(Vec<Individual>, Vec
         return None;
     }
     let subject = fields.subject.to_string();
-    let unavailable: ColoredString = format!("{conference}A {subject} {level} unavailable").red();
-    let completed: ColoredString = format!("{conference}A {subject} {level} completed").green();
+    let support = supports_color::on(Stream::Stdout);
+    let mut unavailable = format!("{conference}A {subject} {level} unavailable").red();
+    let mut completed = format!("{conference}A {subject} {level} completed").green();
+    match support {
+        Some(support) => {
+            if support.has_basic && !support.has_16m {
+                unavailable.fgcolor = None;
+                unavailable.bgcolor = None;
+                completed.fgcolor = None;
+                completed.bgcolor = None;
+            }
+        }
+        _ => {
+            unavailable.fgcolor = None;
+            unavailable.bgcolor = None;
+            completed.fgcolor = None;
+            completed.bgcolor = None;
+        }
+    };
 
     let mut individual_results: Vec<Individual> = Vec::new();
     let mut team_results: Vec<Team> = Vec::new();

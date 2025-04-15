@@ -11,3 +11,4 @@ itertools = "0.14.0"
 minreq = { version = "2.13.3", features = ["punycode", "https"]}
 rayon = "1.10.0"
 scraper = "0.23.1"
+supports-color = "3.0.2"

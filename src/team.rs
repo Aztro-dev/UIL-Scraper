@@ -1,6 +1,7 @@
 use colored::{Color, ColoredString, Colorize};
 use scraper::{ElementRef, Selector};
 use std::{cmp, collections::HashMap};
+use supports_color::Stream;
 
 use crate::request::{RequestFields, Subject, district_as_region};
 
@@ -123,6 +124,8 @@ impl Team {
     }
 
     pub fn display_results(mut results: Vec<Self>, subject: Subject, positions: usize) {
+        let support = supports_color::on(Stream::Stdout);
+
         results.sort_by(|a, b| {
             let a_score = a.score;
             let b_score = b.score;
@@ -273,12 +276,32 @@ impl Team {
 
                 let region = district_as_region(Some(district)).unwrap_or(0);
 
-                let region_str: ColoredString = match region {
+                let mut region_str: ColoredString = match region {
                     1 => "Region 1".red(),
                     2 => "Region 2".yellow(),
                     3 => "Region 3".green(),
                     4 => "Region 4".blue(),
                     _ => "".into(),
+                };
+                match support {
+                    Some(support) => {
+                        if support.has_basic && !support.has_16m {
+                            base.fgcolor = None;
+                            base.bgcolor = None;
+                            region_str.fgcolor = None;
+                            region_str.bgcolor = None;
+                            advance_status.fgcolor = None;
+                            advance_status.bgcolor = None;
+                        }
+                    }
+                    _ => {
+                        base.fgcolor = None;
+                        base.bgcolor = None;
+                        region_str.fgcolor = None;
+                        region_str.bgcolor = None;
+                        advance_status.fgcolor = None;
+                        advance_status.bgcolor = None;
+                    }
                 };
 
                 println!(
@@ -296,8 +319,37 @@ impl Team {
                     advance_status = "(Wildcard)".yellow();
                 }
 
+                match support {
+                    Some(support) => {
+                        if support.has_basic && !support.has_16m {
+                            base.fgcolor = None;
+                            base.bgcolor = None;
+                            advance_status.fgcolor = None;
+                            advance_status.bgcolor = None;
+                        }
+                    }
+                    _ => {
+                        base.fgcolor = None;
+                        base.bgcolor = None;
+                        advance_status.fgcolor = None;
+                        advance_status.bgcolor = None;
+                    }
+                };
+
                 println!("{base} {conference_str} - Region {region} {advance_status}");
             } else {
+                match support {
+                    Some(support) => {
+                        if support.has_basic && !support.has_16m {
+                            base.fgcolor = None;
+                            base.bgcolor = None;
+                        }
+                    }
+                    _ => {
+                        base.fgcolor = None;
+                        base.bgcolor = None;
+                    }
+                };
                 println!("{base} {conference_str}");
             }
         }

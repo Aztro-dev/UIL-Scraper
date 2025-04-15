@@ -1,6 +1,7 @@
 use colored::{Color, ColoredString, Colorize};
 use scraper::{selectable::Selectable, *};
 use std::cmp;
+use supports_color::Stream;
 
 use crate::request::{RequestFields, Subject, district_as_region};
 
@@ -135,6 +136,8 @@ impl Individual {
     }
 
     pub fn display_results(mut results: Vec<Self>, positions: usize) {
+        let support = supports_color::on(Stream::Stdout);
+
         results.sort_by(|a, b| {
             let a_score = a.score;
             let b_score = b.score;
@@ -228,19 +231,59 @@ impl Individual {
             if district.is_some() {
                 let region = district_as_region(district).unwrap_or(0);
 
-                let region_str: ColoredString = match region {
+                let mut region_str: ColoredString = match region {
                     1 => "R1".red(),
                     2 => "R2".yellow(),
                     3 => "R3".green(),
                     4 => "R4".blue(),
                     _ => "".into(),
                 };
+                match support {
+                    Some(support) => {
+                        if support.has_basic && !support.has_16m {
+                            base.fgcolor = None;
+                            base.bgcolor = None;
+                            region_str.fgcolor = None;
+                            region_str.bgcolor = None;
+                        }
+                    }
+                    _ => {
+                        base.fgcolor = None;
+                        base.bgcolor = None;
+                        region_str.fgcolor = None;
+                        region_str.bgcolor = None;
+                    }
+                };
 
                 let district = district.unwrap();
                 println!("{base} ({conference_str} D{district:<2} {region_str} - {school})");
             } else if let Some(region) = individual.region {
+                match support {
+                    Some(support) => {
+                        if support.has_basic && !support.has_16m {
+                            base.fgcolor = None;
+                            base.bgcolor = None;
+                        }
+                    }
+                    _ => {
+                        base.fgcolor = None;
+                        base.bgcolor = None;
+                    }
+                };
                 println!("{base} ({conference_str} R{region} - {school})");
             } else {
+                match support {
+                    Some(support) => {
+                        if support.has_basic && !support.has_16m {
+                            base.fgcolor = None;
+                            base.bgcolor = None;
+                        }
+                    }
+                    _ => {
+                        base.fgcolor = None;
+                        base.bgcolor = None;
+                    }
+                };
                 println!("{base} ({conference_str} - {school})");
             }
         }
