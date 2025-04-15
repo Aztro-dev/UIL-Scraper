@@ -248,7 +248,7 @@ impl Team {
             }
             let conference = team.conference;
 
-            let conference_str: ColoredString = match conference {
+            let mut conference_str: ColoredString = match conference {
                 1 => "1A".white(),
                 2 => "2A".yellow(),
                 3 => "3A".bright_blue(),
@@ -288,6 +288,8 @@ impl Team {
                         if support.has_basic && !support.has_16m {
                             base.fgcolor = None;
                             base.bgcolor = None;
+                            conference_str.fgcolor = None;
+                            conference_str.bgcolor = None;
                             region_str.fgcolor = None;
                             region_str.bgcolor = None;
                             advance_status.fgcolor = None;
@@ -297,6 +299,8 @@ impl Team {
                     _ => {
                         base.fgcolor = None;
                         base.bgcolor = None;
+                        conference_str.fgcolor = None;
+                        conference_str.bgcolor = None;
                         region_str.fgcolor = None;
                         region_str.bgcolor = None;
                         advance_status.fgcolor = None;
@@ -324,6 +328,8 @@ impl Team {
                         if support.has_basic && !support.has_16m {
                             base.fgcolor = None;
                             base.bgcolor = None;
+                            conference_str.fgcolor = None;
+                            conference_str.bgcolor = None;
                             advance_status.fgcolor = None;
                             advance_status.bgcolor = None;
                         }
@@ -331,6 +337,8 @@ impl Team {
                     _ => {
                         base.fgcolor = None;
                         base.bgcolor = None;
+                        conference_str.fgcolor = None;
+                        conference_str.bgcolor = None;
                         advance_status.fgcolor = None;
                         advance_status.bgcolor = None;
                     }
@@ -343,11 +351,15 @@ impl Team {
                         if support.has_basic && !support.has_16m {
                             base.fgcolor = None;
                             base.bgcolor = None;
+                            conference_str.fgcolor = None;
+                            conference_str.bgcolor = None;
                         }
                     }
                     _ => {
                         base.fgcolor = None;
                         base.bgcolor = None;
+                        conference_str.fgcolor = None;
+                        conference_str.bgcolor = None;
                     }
                 };
                 println!("{base} {conference_str}");

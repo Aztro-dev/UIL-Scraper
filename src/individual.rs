@@ -217,7 +217,7 @@ impl Individual {
             let school = individual.school.clone();
             let conference = individual.conference;
 
-            let conference_str: ColoredString = match conference {
+            let mut conference_str: ColoredString = match conference {
                 1 => "1A".white(),
                 2 => "2A".yellow(),
                 3 => "3A".bright_blue(),
@@ -243,6 +243,8 @@ impl Individual {
                         if support.has_basic && !support.has_16m {
                             base.fgcolor = None;
                             base.bgcolor = None;
+                            conference_str.fgcolor = None;
+                            conference_str.bgcolor = None;
                             region_str.fgcolor = None;
                             region_str.bgcolor = None;
                         }
@@ -250,6 +252,8 @@ impl Individual {
                     _ => {
                         base.fgcolor = None;
                         base.bgcolor = None;
+                        conference_str.fgcolor = None;
+                        conference_str.bgcolor = None;
                         region_str.fgcolor = None;
                         region_str.bgcolor = None;
                     }
@@ -263,11 +267,15 @@ impl Individual {
                         if support.has_basic && !support.has_16m {
                             base.fgcolor = None;
                             base.bgcolor = None;
+                            conference_str.fgcolor = None;
+                            conference_str.bgcolor = None;
                         }
                     }
                     _ => {
                         base.fgcolor = None;
                         base.bgcolor = None;
+                        conference_str.fgcolor = None;
+                        conference_str.bgcolor = None;
                     }
                 };
                 println!("{base} ({conference_str} R{region} - {school})");
@@ -277,11 +285,15 @@ impl Individual {
                         if support.has_basic && !support.has_16m {
                             base.fgcolor = None;
                             base.bgcolor = None;
+                            conference_str.fgcolor = None;
+                            conference_str.bgcolor = None;
                         }
                     }
                     _ => {
                         base.fgcolor = None;
                         base.bgcolor = None;
+                        conference_str.fgcolor = None;
+                        conference_str.bgcolor = None;
                     }
                 };
                 println!("{base} ({conference_str} - {school})");
