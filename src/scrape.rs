@@ -34,7 +34,7 @@ pub fn scrape_subject(
 
     for conference in conferences {
         fields.conference = conference;
-        if region.is_some() && region.unwrap() == 0 {
+        if district.is_none() && region.is_some() && region.unwrap() == 0 {
             (1..=4).into_par_iter().for_each(|region| {
                 let fields = RequestFields {
                     subject: subject.clone(),
@@ -60,7 +60,11 @@ pub fn scrape_subject(
             continue;
         }
         if district.is_some() && district.unwrap() == 0 {
-            (1..=32).into_par_iter().for_each(|district| {
+            let range = match region {
+                Some(region) => (region * 8 - 7)..=(region * 8),
+                None => 1..=32,
+            };
+            range.into_par_iter().for_each(|district| {
                 let fields = RequestFields {
                     subject: subject.clone(),
                     district: Some(district),
