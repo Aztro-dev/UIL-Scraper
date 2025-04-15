@@ -61,6 +61,7 @@ pub fn scrape_subject(
         }
         if district.is_some() && district.unwrap() == 0 {
             let range = match region {
+                Some(0) => 1..=32,
                 Some(region) => (region * 8 - 7)..=(region * 8),
                 None => 1..=32,
             };
