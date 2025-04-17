@@ -120,6 +120,10 @@ pub fn sweepstakes(
     let mut individual_results: Vec<Individual> = Vec::new();
     let mut team_results: Vec<Team> = Vec::new();
     for subject in supported_subjects {
+        if subject == Subject::ComputerApplications && request_fields.year > 2024 {
+            // Computer Apps is discontinued
+            continue;
+        }
         let mut fields = request_fields.clone();
         fields.subject = subject.clone();
         let results = scrape_subject(fields.clone(), conferences.clone(), mute);
