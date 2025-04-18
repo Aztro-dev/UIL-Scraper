@@ -207,3 +207,14 @@ uil_scraper mathematics --district --mute
     - Example: `--district`
     - Example: `--region`
     - Example: `--state`
+  - Other fields:
+    - Because of how weird CLIs are, in order to specify something like the year, you have to use this syntax:
+    - `uil_scraper -- --year 2024 <subject> compare ...`
+    - Note the two dashes before the two normal dashes, separated by a space.
+  - Examples:
+ 
+    ```sh
+    uil_scraper cs compare "Justin Nguyen" "Sri Abhinav Thatavarthi" --conferences 4,5 --district
+    uil_scraper -- --year 2024 rank compare "Justin Nguyen" "Warith Rahman" --conferences 4,6 --state
+    uil_scraper -- --mute math compare "Justin Nguyen" "Warith Rahman" --conferences 4,6 --state
+    ```
