@@ -54,10 +54,10 @@ pub enum Commands {
         #[arg(short, long)]
         conferences: String,
         #[arg(short, long)]
-        districts: Option<String>,
+        district: bool,
         #[arg(short, long)]
-        regions: Option<String>,
+        region: bool,
         #[arg(short, long)]
-        state: Option<bool>,
+        state: bool,
     },
 }

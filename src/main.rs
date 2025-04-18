@@ -36,109 +36,57 @@ fn main() {
     let conferences =
         RequestFields::parse_range(cli.conference.unwrap_or(String::from("16"))).unwrap();
 
-    let results =
-        if cli.command.is_none() && subject != Subject::Rankings && subject != Subject::Sweepstakes
-        {
-            scrape_subject(
-                RequestFields {
-                    district: cli.district,
-                    region: cli.region,
-                    state: cli.state,
-                    subject: subject.clone(),
-                    conference: 0,
-                    year,
-                },
-                conferences.clone(),
-                cli.mute,
-            )
-        } else if subject == Subject::Rankings {
-            overall::rankings(
-                RequestFields {
-                    district: cli.district,
-                    region: cli.region,
-                    state: cli.state,
-                    subject: subject.clone(),
-                    conference: 0,
-                    year,
-                },
-                conferences.clone(),
-                cli.mute,
-            )
-        } else if subject == Subject::Sweepstakes {
-            overall::sweepstakes(
-                RequestFields {
-                    district: cli.district,
-                    region: cli.region,
-                    state: cli.state,
-                    subject: subject.clone(),
-                    conference: 0,
-                    year,
-                },
-                conferences.clone(),
-                cli.mute,
-            )
-        } else {
-            let Commands::Compare {
-                person_a: _,
-                person_b: _,
-                conferences,
-                districts,
-                regions,
-                state: _,
-            } = cli.command.clone().unwrap();
-            let conferences = RequestFields::parse_range(conferences)
-                .expect("Conferences entered in the wrong order");
-            let mut fields = RequestFields {
-                district: cli.district,
-                region: cli.region,
-                state: cli.state,
-                subject: subject.clone(),
-                conference: 0,
-                year,
-            };
+    let results = if cli.command.is_none() {
+        let fields = RequestFields {
+            district: cli.district,
+            region: cli.region,
+            state: cli.state,
+            subject: subject.clone(),
+            conference: 0,
+            year,
+        };
+        match subject {
+            Subject::Rankings => overall::rankings(fields, conferences.clone(), cli.mute),
+            Subject::Sweepstakes => overall::sweepstakes(fields, conferences.clone(), cli.mute),
+            _ => scrape_subject(fields, conferences.clone(), cli.mute),
+        }
+    } else {
+        let Commands::Compare {
+            person_a: _,
+            person_b: _,
+            conferences,
+            district,
+            region,
+            state,
+        } = cli.command.clone().unwrap();
+        let conferences = RequestFields::parse_range(conferences)
+            .expect("Conferences entered in the wrong order");
 
-            let districts_parsed = RequestFields::parse_range(districts.unwrap_or("".to_string()));
-            let regions_parsed = RequestFields::parse_range(regions.unwrap_or("".to_string()));
+        let district = if district { Some(0) } else { None };
+        let region = if region { Some(0) } else { None };
 
-            let (level_1, level_2) = if districts_parsed.is_some() {
-                let mut districts = districts_parsed.clone().unwrap();
-                districts.sort();
-                fields.district = Some(districts[0]);
-                (districts[0], districts[1])
-            } else if regions_parsed.is_some() {
-                let mut regions = regions_parsed.clone().unwrap();
-                regions.sort();
-                fields.region = Some(regions[0]);
-                (regions[0], regions[1])
-            } else {
-                fields.state = true;
-                (0, 0)
-            };
-
-            let (mut individual_results, mut team_results) =
-                scrape_subject(fields.clone(), conferences.clone(), cli.mute)
-                    .expect("No results found");
-
-            if level_1 != level_2 {
-                if fields.district.is_some() {
-                    fields.district = Some(level_2);
-                } else if fields.region.is_some() {
-                    fields.region = Some(level_2);
-                }
-                let mut results =
-                    scrape_subject(fields, conferences, cli.mute).expect("No results found");
-
-                individual_results.append(&mut results.0);
-                team_results.append(&mut results.1);
-            }
-
-            if individual_results.is_empty() || team_results.is_empty() {
-                None
-            } else {
-                Some((individual_results, team_results))
-            }
+        let fields = RequestFields {
+            district,
+            region,
+            state,
+            subject: subject.clone(),
+            conference: 0,
+            year,
         };
 
+        let (individual_results, team_results) = match subject {
+            Subject::Rankings => overall::rankings(fields, conferences.clone(), cli.mute),
+            Subject::Sweepstakes => overall::sweepstakes(fields, conferences.clone(), cli.mute),
+            _ => scrape_subject(fields.clone(), conferences.clone(), cli.mute),
+        }
+        .expect("No results found");
+
+        if individual_results.is_empty() || team_results.is_empty() {
+            None
+        } else {
+            Some((individual_results, team_results))
+        }
+    };
     if results.is_none() {
         println!("{}", "Didn't return any results".red());
         return;
@@ -151,8 +99,8 @@ fn main() {
             person_a,
             person_b,
             conferences: _,
-            districts: _,
-            regions: _,
+            district: _,
+            region: _,
             state: _,
         } = cli.command.clone().unwrap();
         {
