@@ -107,7 +107,7 @@ pub fn sweepstakes(
 ) -> Option<(Vec<Individual>, Vec<Team>)> {
     let supported_subjects = [
         Subject::Accounting,
-        // Subject::ComputerApplications,
+        Subject::ComputerApplications,
         Subject::CurrentEvents,
         Subject::ComputerScience,
         Subject::Calculator,
