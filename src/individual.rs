@@ -240,7 +240,7 @@ impl Individual {
                 };
                 match support {
                     Some(support) => {
-                        if support.has_basic && !support.has_16m {
+                        if !support.has_basic {
                             base.fgcolor = None;
                             base.bgcolor = None;
                             conference_str.fgcolor = None;
@@ -264,7 +264,7 @@ impl Individual {
             } else if let Some(region) = individual.region {
                 match support {
                     Some(support) => {
-                        if support.has_basic && !support.has_16m {
+                        if !support.has_basic {
                             base.fgcolor = None;
                             base.bgcolor = None;
                             conference_str.fgcolor = None;
@@ -282,7 +282,7 @@ impl Individual {
             } else {
                 match support {
                     Some(support) => {
-                        if support.has_basic && !support.has_16m {
+                        if !support.has_basic {
                             base.fgcolor = None;
                             base.bgcolor = None;
                             conference_str.fgcolor = None;

@@ -285,7 +285,7 @@ impl Team {
                 };
                 match support {
                     Some(support) => {
-                        if support.has_basic && !support.has_16m {
+                        if !support.has_basic {
                             base.fgcolor = None;
                             base.bgcolor = None;
                             conference_str.fgcolor = None;
@@ -325,7 +325,7 @@ impl Team {
 
                 match support {
                     Some(support) => {
-                        if support.has_basic && !support.has_16m {
+                        if !support.has_basic {
                             base.fgcolor = None;
                             base.bgcolor = None;
                             conference_str.fgcolor = None;
@@ -348,7 +348,7 @@ impl Team {
             } else {
                 match support {
                     Some(support) => {
-                        if support.has_basic && !support.has_16m {
+                        if !support.has_basic {
                             base.fgcolor = None;
                             base.bgcolor = None;
                             conference_str.fgcolor = None;

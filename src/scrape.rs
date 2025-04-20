@@ -126,7 +126,7 @@ pub fn scrape(fields: RequestFields, mute: bool) -> Option<(Vec<Individual>, Vec
     let mut completed = format!("{conference}A {subject} {level} completed").green();
     match support {
         Some(support) => {
-            if support.has_basic && !support.has_16m {
+            if !support.has_basic {
                 unavailable.fgcolor = None;
                 unavailable.bgcolor = None;
                 completed.fgcolor = None;
