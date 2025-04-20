@@ -43,7 +43,8 @@ cd UIL-Scraper
 cargo build
 ```
 
-- To use the command, run `cargo r` followed by the
+- To use the command, run `cargo r` followed by the command you want, as specified later in this README
+  - Example: `cargo r cs --district`
 - If you want to use this command whenever you open up your terminal, I would recommend adding the produced binary to your PATH
 
 ```sh
