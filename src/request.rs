@@ -253,7 +253,10 @@ pub fn district_as_region(district: Option<u8>) -> Option<u8> {
     Some(region)
 }
 
+#[allow(unreachable_code)]
+#[allow(unused_variables)]
 pub fn old_school(fields: RequestFields) -> String {
+    panic!("{}", "Old school results are currently not supported".red());
     let level = if fields.district.is_some() {
         "D"
     } else if fields.region.is_some() {
