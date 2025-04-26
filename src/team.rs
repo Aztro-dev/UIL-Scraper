@@ -207,10 +207,12 @@ impl Team {
             if score != previous_score {
                 previous_score = score;
             }
-
             previous_place = place;
+
+            let place_length = results.len().checked_ilog10().unwrap_or(2) as usize + 1;
+
             let mut base: ColoredString = format!(
-                "{:2} {:longest_team_name$} => {:>score_length$}",
+                "{:place_length$} {:longest_team_name$} => {:>score_length$}",
                 place + 1,
                 school,
                 score

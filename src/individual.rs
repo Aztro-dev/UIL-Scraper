@@ -190,8 +190,10 @@ impl Individual {
             }
             previous_place = place;
 
+            let place_length = results.len().checked_ilog10().unwrap_or(2) as usize + 1;
+
             let mut base: ColoredString = format!(
-                "{:2} {:longest_individual_name$} => {:>score_length$}",
+                "{:place_length$} {:longest_individual_name$} => {:>score_length$}",
                 place + 1,
                 name,
                 score
