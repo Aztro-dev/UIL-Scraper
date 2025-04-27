@@ -150,6 +150,7 @@ fn main() {
             println!();
             println!("Individual Physics Scores:");
             Individual::display_results(physics, cli.individual_positions.unwrap_or(25));
+            println!();
         }
     }
     if !team_results.is_empty() {
