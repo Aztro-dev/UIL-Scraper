@@ -3,7 +3,10 @@ use scraper::{ElementRef, Selector};
 use std::{cmp, collections::HashMap};
 use supports_color::Stream;
 
-use crate::request::{RequestFields, Subject, district_as_region};
+use crate::{
+    advance::AdvanceTypeTeam,
+    request::{RequestFields, Subject, district_as_region},
+};
 
 #[derive(Clone, PartialEq, PartialOrd, Debug)]
 pub struct Team {
@@ -13,6 +16,7 @@ pub struct Team {
     pub district: Option<u8>,
     pub region: Option<u8>,
     pub points: f32,
+    pub advance: Option<AdvanceTypeTeam>,
     pub misc: TeamMisc,
 }
 
@@ -21,6 +25,21 @@ pub enum TeamMisc {
     Normal,
 
     ComputerScience { prog: Option<i16> },
+}
+
+impl Default for Team {
+    fn default() -> Self {
+        Self {
+            school: String::new(),
+            district: None,
+            region: None,
+            conference: 0,
+            score: 0,
+            points: 0.0,
+            advance: None,
+            misc: TeamMisc::Normal,
+        }
+    }
 }
 
 impl Team {
@@ -59,6 +78,7 @@ impl Team {
         let span_selector = Selector::parse("span").unwrap();
 
         let mut points_index = 0;
+        let mut advance_index = 0;
 
         for row in table.select(&row_selector) {
             let cells: Vec<String> = row
@@ -70,7 +90,11 @@ impl Team {
                 for (index, column) in cells.iter().enumerate() {
                     if column == "Points" {
                         points_index = index;
-                        break;
+                        continue;
+                    }
+                    if column == "Advance?" {
+                        advance_index = index;
+                        continue;
                     }
                 }
                 // We continue because this row doesn't contain any data
@@ -108,6 +132,18 @@ impl Team {
                 _ => cells[2].parse::<i16>().unwrap_or(0),
             };
             let points = cells[points_index].parse::<f32>().unwrap_or(0.0);
+
+            let advance_str = if advance_index != 0 {
+                &cells[advance_index]
+            } else {
+                &String::new()
+            };
+            let advance = match advance_str.as_str() {
+                "Region" | "State" => Some(AdvanceTypeTeam::Advance),
+                "Alternate" => Some(AdvanceTypeTeam::Alternate),
+                _ => None,
+            };
+
             let team: Team = Team {
                 score,
                 school,
@@ -115,6 +151,7 @@ impl Team {
                 district,
                 region,
                 points,
+                advance,
                 misc,
             };
 
@@ -135,57 +172,13 @@ impl Team {
         results.dedup();
 
         if positions != 0 {
-            results.resize(
-                cmp::min(results.len(), positions),
-                Team {
-                    score: 0,
-                    school: String::new(),
-                    conference: 0,
-                    district: None,
-                    region: None,
-                    points: 0.0,
-                    misc: TeamMisc::Normal,
-                },
-            );
+            results.resize(cmp::min(results.len(), positions), Team::default());
         }
 
         let mut longest_team_name = 0;
-        // u8: district or region
-        // i16: score
-        let mut winning_teams: HashMap<(u8, u8), i16> = HashMap::new();
         for team in results.iter() {
             if team.school.len() > longest_team_name {
                 longest_team_name = team.school.len();
-            }
-            let location = team.district.unwrap_or(team.region.unwrap_or(0));
-            winning_teams
-                .entry((location, team.conference))
-                .or_insert(team.score);
-        }
-
-        // u8: region or district
-        // i16: score
-        let mut wildcarding_teams: HashMap<(u8, u8), i16> = HashMap::new();
-
-        for team in results.iter() {
-            if team.district.is_some() {
-                let location = team.district.unwrap();
-                if *winning_teams.get(&(location, team.conference)).unwrap() > team.score {
-                    let region_value = district_as_region(Some(location)).unwrap();
-                    let result =
-                        wildcarding_teams.insert((region_value, team.conference), team.score);
-                    if let Some(old_value) = result {
-                        wildcarding_teams.insert((region_value, team.conference), old_value);
-                    }
-                }
-            } else if team.region.is_some() {
-                let location = team.region.unwrap();
-                if *winning_teams.get(&(location, team.conference)).unwrap() > team.score {
-                    let result = wildcarding_teams.insert((1, team.conference), team.score);
-                    if let Some(old_value) = result {
-                        wildcarding_teams.insert((1, team.conference), old_value);
-                    }
-                }
             }
         }
 
@@ -260,22 +253,39 @@ impl Team {
                 _ => "".into(),
             };
 
-            if let Some(district) = team.district {
-                let mut advance_status = "".green();
-                if winning_teams.contains_key(&(district, conference))
-                    && *winning_teams.get(&(district, conference)).unwrap_or(&0) == score
-                {
-                    advance_status = "(Advanced)".green();
-                } else if wildcarding_teams
-                    .contains_key(&(district_as_region(Some(district)).unwrap(), conference))
-                    && *wildcarding_teams
-                        .get(&(district_as_region(Some(district)).unwrap(), conference))
-                        .unwrap_or(&0)
-                        == score
-                {
-                    advance_status = "(Wildcard)".yellow();
-                }
+            let advance = team.advance.clone();
 
+            let mut advance_status = "".green();
+            if advance.is_some() {
+                let advance = advance.unwrap();
+                if advance == AdvanceTypeTeam::Advance {
+                    advance_status = "(Advanced)".green();
+                } else {
+                    advance_status = "(Wildcard)".truecolor(0xFF, 0xA5, 0x00);
+                }
+            }
+            match support {
+                Some(support) => {
+                    if !support.has_basic {
+                        base.fgcolor = None;
+                        base.bgcolor = None;
+                        conference_str.fgcolor = None;
+                        conference_str.bgcolor = None;
+                        advance_status.fgcolor = None;
+                        advance_status.bgcolor = None;
+                    }
+                }
+                _ => {
+                    base.fgcolor = None;
+                    base.bgcolor = None;
+                    conference_str.fgcolor = None;
+                    conference_str.bgcolor = None;
+                    advance_status.fgcolor = None;
+                    advance_status.bgcolor = None;
+                }
+            };
+
+            if let Some(district) = team.district {
                 let region = district_as_region(Some(district)).unwrap_or(0);
 
                 let mut region_str: ColoredString = match region {
@@ -285,87 +295,98 @@ impl Team {
                     4 => "Region 4".blue(),
                     _ => "".into(),
                 };
+
                 match support {
                     Some(support) => {
                         if !support.has_basic {
-                            base.fgcolor = None;
-                            base.bgcolor = None;
-                            conference_str.fgcolor = None;
-                            conference_str.bgcolor = None;
                             region_str.fgcolor = None;
                             region_str.bgcolor = None;
-                            advance_status.fgcolor = None;
-                            advance_status.bgcolor = None;
                         }
                     }
                     _ => {
-                        base.fgcolor = None;
-                        base.bgcolor = None;
-                        conference_str.fgcolor = None;
-                        conference_str.bgcolor = None;
                         region_str.fgcolor = None;
                         region_str.bgcolor = None;
-                        advance_status.fgcolor = None;
-                        advance_status.bgcolor = None;
                     }
-                };
+                }
 
                 println!(
                     "{base} {conference_str} - District {district:<2} {region_str} {advance_status}"
                 );
             } else if let Some(region) = team.region {
-                let mut advance_status = "".green();
-                if winning_teams.contains_key(&(region, conference))
-                    && *winning_teams.get(&(region, conference)).unwrap_or(&0) == score
-                {
-                    advance_status = "(Advanced)".green();
-                } else if wildcarding_teams.contains_key(&(1, conference))
-                    && *wildcarding_teams.get(&(1, conference)).unwrap_or(&0) == score
-                {
-                    advance_status = "(Wildcard)".yellow();
-                }
-
-                match support {
-                    Some(support) => {
-                        if !support.has_basic {
-                            base.fgcolor = None;
-                            base.bgcolor = None;
-                            conference_str.fgcolor = None;
-                            conference_str.bgcolor = None;
-                            advance_status.fgcolor = None;
-                            advance_status.bgcolor = None;
-                        }
-                    }
-                    _ => {
-                        base.fgcolor = None;
-                        base.bgcolor = None;
-                        conference_str.fgcolor = None;
-                        conference_str.bgcolor = None;
-                        advance_status.fgcolor = None;
-                        advance_status.bgcolor = None;
-                    }
-                };
-
                 println!("{base} {conference_str} - Region {region} {advance_status}");
             } else {
-                match support {
-                    Some(support) => {
-                        if !support.has_basic {
-                            base.fgcolor = None;
-                            base.bgcolor = None;
-                            conference_str.fgcolor = None;
-                            conference_str.bgcolor = None;
-                        }
-                    }
-                    _ => {
-                        base.fgcolor = None;
-                        base.bgcolor = None;
-                        conference_str.fgcolor = None;
-                        conference_str.bgcolor = None;
-                    }
-                };
                 println!("{base} {conference_str}");
             }
         }
+    }
+
+    pub fn get_advancing(mut results: Vec<Self>) -> Vec<Self> {
+        results.sort_by(|a, b| {
+            let a_score = a.score;
+            let b_score = b.score;
+            b_score.cmp(&a_score)
+        });
+
+        results.dedup();
+
+        // u8: district or region
+        // u8: conference
+        // i16: score
+        let mut winning_teams: HashMap<(u8, u8), Team> = HashMap::new();
+        for team in results.iter() {
+            let location = team.district.unwrap_or(team.region.unwrap_or(0));
+            winning_teams
+                .entry((location, team.conference))
+                .or_insert(team.clone());
+        }
+
+        // u8: region or district
+        // u8: conference
+        // i16: score
+        let mut wildcarding_teams: HashMap<(u8, u8), Team> = HashMap::new();
+
+        for team in results.iter() {
+            if team.district.is_some() {
+                let location = team.district.unwrap();
+                if winning_teams
+                    .get(&(location, team.conference))
+                    .unwrap()
+                    .score
+                    > team.score
+                {
+                    let region_value = district_as_region(Some(location)).unwrap();
+                    let result =
+                        wildcarding_teams.insert((region_value, team.conference), team.clone());
+                    if let Some(old_value) = result {
+                        wildcarding_teams.insert((region_value, team.conference), old_value);
+                    }
+                }
+            } else if team.region.is_some() {
+                let location = team.region.unwrap();
+                if winning_teams
+                    .get(&(location, team.conference))
+                    .unwrap()
+                    .score
+                    > team.score
+                {
+                    let result = wildcarding_teams.insert((1, team.conference), team.clone());
+                    if let Some(old_value) = result {
+                        wildcarding_teams.insert((1, team.conference), old_value);
+                    }
+                }
+            }
+        }
+
+        let mut advancing_teams: Vec<Self> = Vec::new();
+
+        for (_, team) in winning_teams {
+            advancing_teams.push(team);
+        }
+
+        for (_, team) in wildcarding_teams {
+            advancing_teams.push(team);
+        }
+
+        advancing_teams
     }
 }

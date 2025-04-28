@@ -1,9 +1,12 @@
+use advance::{AdvanceTypeIndividual, AdvanceTypeTeam};
 use chrono::Datelike;
 
 use colored::Colorize;
 
 mod request;
 use request::*;
+
+mod advance;
 
 mod individual;
 use individual::*;
@@ -106,6 +109,37 @@ fn main() {
         {
             individual_results.retain(|x| x.name == person_a || x.name == person_b);
             team_results.retain(|x| x.school == person_a || x.school == person_b);
+        }
+    }
+
+    if !team_results.is_empty() && !individual_results.is_empty() {
+        let advancing_teams = Team::get_advancing(team_results.clone());
+        for team in team_results.iter_mut() {
+            if !advancing_teams.contains(team) {
+                team.advance = None;
+            }
+        }
+
+        for indiv in individual_results.iter_mut() {
+            let advance = indiv.advance.clone();
+            if advance.is_some() {
+                continue;
+            }
+
+            let team = team_results
+                .iter()
+                .find(|&team| team.school == indiv.school.clone());
+            let team_advance = team.cloned().unwrap_or_default().advance;
+            if team_advance.is_none() {
+                continue;
+            }
+            let team_advance = team_advance.unwrap();
+
+            if team_advance == AdvanceTypeTeam::Advance && advance.is_none() {
+                indiv.advance = Some(AdvanceTypeIndividual::Team);
+            } else {
+                indiv.advance = Some(AdvanceTypeIndividual::Wild);
+            }
         }
     }
 

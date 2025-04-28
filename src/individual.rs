@@ -3,6 +3,8 @@ use scraper::{selectable::Selectable, *};
 use std::cmp;
 use supports_color::Stream;
 
+use crate::advance::AdvanceTypeIndividual;
+
 use crate::request::{RequestFields, Subject, district_as_region};
 
 #[derive(Clone, PartialEq, PartialOrd, Debug)]
@@ -14,7 +16,24 @@ pub struct Individual {
     pub region: Option<u8>,
     pub score: i16,
     pub points: f32,
+    pub advance: Option<AdvanceTypeIndividual>,
     pub misc: IndividualMisc,
+}
+
+impl Default for Individual {
+    fn default() -> Self {
+        Self {
+            name: String::new(),
+            school: String::new(),
+            district: None,
+            region: None,
+            conference: 0,
+            score: 0,
+            points: 0.0,
+            advance: None,
+            misc: IndividualMisc::Normal,
+        }
+    }
 }
 
 #[derive(Clone, Eq, PartialEq, PartialOrd, Debug)]
@@ -87,6 +106,7 @@ impl Individual {
         let cell_selector = Selector::parse("td").ok()?;
 
         let mut points_index = 0;
+        let mut advance_index = 0;
 
         for row in table.select(&row_selector) {
             let cells: Vec<String> = row
@@ -99,7 +119,11 @@ impl Individual {
                 for (index, column) in cells.iter().enumerate() {
                     if column == "Points" {
                         points_index = index;
-                        break;
+                        continue;
+                    }
+                    if column == "Advance?" {
+                        advance_index = index;
+                        continue;
                     }
                 }
                 // We continue because this row doesn't contain any data
@@ -115,6 +139,17 @@ impl Individual {
                 },
                 _ => IndividualMisc::Normal {},
             };
+
+            let advance_str = if advance_index != 0 {
+                &cells[advance_index]
+            } else {
+                &String::new()
+            };
+            let advance = match advance_str.as_str() {
+                "Region" | "State" => Some(AdvanceTypeIndividual::Indiv),
+                _ => None,
+            };
+
             let individual = Individual {
                 name: name.clone(),
                 school: school.clone(),
@@ -128,6 +163,7 @@ impl Individual {
                 .parse::<i16>()
                 .unwrap_or(0),
                 points: cells[points_index].parse::<f32>().unwrap_or(0.0),
+                advance,
                 misc: individual_misc,
             };
             results.push(individual);
@@ -147,19 +183,7 @@ impl Individual {
         results.dedup();
 
         if positions != 0 {
-            results.resize(
-                cmp::min(results.len(), positions),
-                Individual {
-                    score: 0,
-                    conference: 1,
-                    district: None,
-                    region: None,
-                    school: String::new(),
-                    name: String::new(),
-                    points: 0.0,
-                    misc: IndividualMisc::Normal,
-                },
-            );
+            results.resize(cmp::min(results.len(), positions), Individual::default());
         }
 
         let mut longest_individual_name = 0;
@@ -178,6 +202,7 @@ impl Individual {
         for (place, individual) in results.iter().enumerate() {
             let name = individual.name.clone();
             let score = individual.score;
+            let advance = &individual.advance;
 
             let place = if score == previous_score {
                 previous_place
@@ -229,6 +254,34 @@ impl Individual {
                 _ => "".into(),
             };
 
+            let mut advance_str: ColoredString = match advance {
+                Some(AdvanceTypeIndividual::Indiv) => "Indv".green(),
+                Some(AdvanceTypeIndividual::Team) => "Team".blue(),
+                Some(AdvanceTypeIndividual::Wild) => "Wild".truecolor(0xFF, 0xA5, 0x00),
+                None => "    ".red(),
+            };
+
+            match support {
+                Some(support) => {
+                    if !support.has_basic {
+                        base.fgcolor = None;
+                        base.bgcolor = None;
+                        advance_str.fgcolor = None;
+                        advance_str.bgcolor = None;
+                        conference_str.fgcolor = None;
+                        conference_str.bgcolor = None;
+                    }
+                }
+                _ => {
+                    base.fgcolor = None;
+                    base.bgcolor = None;
+                    advance_str.fgcolor = None;
+                    advance_str.bgcolor = None;
+                    conference_str.fgcolor = None;
+                    conference_str.bgcolor = None;
+                }
+            };
+
             let district = individual.district;
             if district.is_some() {
                 let region = district_as_region(district).unwrap_or(0);
@@ -243,61 +296,23 @@ impl Individual {
                 match support {
                     Some(support) => {
                         if !support.has_basic {
-                            base.fgcolor = None;
-                            base.bgcolor = None;
-                            conference_str.fgcolor = None;
-                            conference_str.bgcolor = None;
                             region_str.fgcolor = None;
                             region_str.bgcolor = None;
                         }
                     }
                     _ => {
-                        base.fgcolor = None;
-                        base.bgcolor = None;
-                        conference_str.fgcolor = None;
-                        conference_str.bgcolor = None;
                         region_str.fgcolor = None;
                         region_str.bgcolor = None;
                     }
                 };
 
                 let district = district.unwrap();
-                println!("{base} ({conference_str} D{district:<2} {region_str} - {school})");
+                println!(
+                    "{base} ({conference_str} D{district:<2} {region_str} - {advance_str} - {school})"
+                );
             } else if let Some(region) = individual.region {
-                match support {
-                    Some(support) => {
-                        if !support.has_basic {
-                            base.fgcolor = None;
-                            base.bgcolor = None;
-                            conference_str.fgcolor = None;
-                            conference_str.bgcolor = None;
-                        }
-                    }
-                    _ => {
-                        base.fgcolor = None;
-                        base.bgcolor = None;
-                        conference_str.fgcolor = None;
-                        conference_str.bgcolor = None;
-                    }
-                };
-                println!("{base} ({conference_str} R{region} - {school})");
+                println!("{base} ({conference_str} R{region} - {advance_str} - {school})");
             } else {
-                match support {
-                    Some(support) => {
-                        if !support.has_basic {
-                            base.fgcolor = None;
-                            base.bgcolor = None;
-                            conference_str.fgcolor = None;
-                            conference_str.bgcolor = None;
-                        }
-                    }
-                    _ => {
-                        base.fgcolor = None;
-                        base.bgcolor = None;
-                        conference_str.fgcolor = None;
-                        conference_str.bgcolor = None;
-                    }
-                };
                 println!("{base} ({conference_str} - {school})");
             }
         }
