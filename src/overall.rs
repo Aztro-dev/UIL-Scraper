@@ -156,18 +156,25 @@ pub fn sweepstakes(
 
         for indiv in indiv.iter_mut() {
             let copy = indiv.clone();
-            for i in 0..std::cmp::min(indiv_ties.len(), 6) {
-                let group = indiv_ties[i].clone();
-                if group.contains(&&copy) {
+            for (i, group) in indiv_ties
+                .iter()
+                .enumerate()
+                .take(std::cmp::min(indiv_ties.len(), 6))
+            {
+                if group.contains(&copy) {
                     let mut sum = 0.0;
-                    for ii in i..std::cmp::min(i + group.len(), 6) {
-                        sum += INDIV_POINTS[ii];
+                    for points in INDIV_POINTS
+                        .iter()
+                        .take(std::cmp::min(i + group.len(), 6))
+                        .skip(i)
+                    {
+                        sum += points;
                     }
                     indiv.points = sum / group.len() as f32;
                 }
             }
             let mut found = false;
-            for result in &mut individual_results.iter_mut() {
+            for result in individual_results.iter_mut() {
                 if result.name == indiv.name {
                     found = true;
                     result.points += indiv.points;
@@ -185,9 +192,12 @@ pub fn sweepstakes(
             } else {
                 3
             };
-            for i in 0..std::cmp::min(team_ties.len(), positions) {
-                let group = team_ties[i].clone();
-                if group.contains(&&copy) {
+            for (i, group) in team_ties
+                .iter()
+                .enumerate()
+                .take(std::cmp::min(team_ties.len(), positions))
+            {
+                if group.contains(&copy) {
                     let mut sum = 0.0;
                     for ii in i..std::cmp::min(i + group.len(), positions) {
                         if positions == 2 {
@@ -200,7 +210,7 @@ pub fn sweepstakes(
                 }
             }
             let mut found = false;
-            for result in &mut team_results {
+            for result in team_results.iter_mut() {
                 if result.school == team.school {
                     found = true;
                     result.points += team.points;
@@ -219,6 +229,12 @@ pub fn sweepstakes(
 
             thread::sleep(second);
         }
+    }
+    for (index, indiv) in individual_results.iter().enumerate() {
+        if index > 25 {
+            break;
+        }
+        println!("{}: {} points", indiv.name.clone(), indiv.points);
     }
     Some((individual_results, team_results))
 }
