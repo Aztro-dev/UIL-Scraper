@@ -32,34 +32,9 @@ pub fn scrape_subject(
 
     conferences.dedup();
 
-    for conference in conferences {
-        fields.conference = conference;
-        if district.is_none() && region.is_some() && region.unwrap() == 0 {
-            (1..=4).into_par_iter().for_each(|region| {
-                let fields = RequestFields {
-                    subject: subject.clone(),
-                    district: None,
-                    region: Some(region),
-                    state: false,
-                    conference,
-                    year,
-                };
-
-                if let Some((mut individual, mut team)) = scrape(fields, mute) {
-                    // Lock and modify safely
-                    {
-                        let mut ind_lock = individual_results.lock().unwrap();
-                        ind_lock.append(&mut individual);
-                    }
-                    {
-                        let mut team_lock = team_results.lock().unwrap();
-                        team_lock.append(&mut team);
-                    }
-                }
-            });
-            continue;
-        }
-        if district.is_some() && district.unwrap() == 0 {
+    if district.is_some() && district.unwrap() == 0 {
+        for conference in conferences.clone() {
+            fields.conference = conference;
             let range = match region {
                 Some(0) => 1..=32,
                 Some(region) => (region * 8 - 7)..=(region * 8),
@@ -77,29 +52,40 @@ pub fn scrape_subject(
 
                 if let Some((mut individual, mut team)) = scrape(fields, mute) {
                     // Lock and modify safely
-                    {
-                        let mut ind_lock = individual_results.lock().unwrap();
-                        ind_lock.append(&mut individual);
-                    }
-                    {
-                        let mut team_lock = team_results.lock().unwrap();
-                        team_lock.append(&mut team);
-                    }
+                    individual_results.lock().unwrap().append(&mut individual);
+                    team_results.lock().unwrap().append(&mut team);
                 }
             });
-            continue;
         }
-        if let Some((mut individual, mut team)) = scrape(fields.clone(), mute) {
-            // Lock and modify safely
-            {
-                let mut ind_lock = individual_results.lock().unwrap();
-                ind_lock.append(&mut individual);
+    } else {
+        conferences.into_par_iter().for_each(|conference| {
+            let mut fields = fields.clone();
+            fields.conference = conference;
+            if district.is_some() || region.is_none() {
+                if let Some((mut individual, mut team)) = scrape(fields, mute) {
+                    // Lock and modify safely
+                    individual_results.lock().unwrap().append(&mut individual);
+                    team_results.lock().unwrap().append(&mut team);
+                }
+            } else if region.is_some() && region.unwrap() == 0 {
+                (1..=4).into_par_iter().for_each(|region| {
+                    let fields = RequestFields {
+                        subject: subject.clone(),
+                        district: None,
+                        region: Some(region),
+                        state: false,
+                        conference,
+                        year,
+                    };
+
+                    if let Some((mut individual, mut team)) = scrape(fields, mute) {
+                        // Lock and modify safely
+                        individual_results.lock().unwrap().append(&mut individual);
+                        team_results.lock().unwrap().append(&mut team);
+                    }
+                });
             }
-            {
-                let mut team_lock = team_results.lock().unwrap();
-                team_lock.append(&mut team);
-            }
-        }
+        });
     }
 
     let individual_results: Vec<Individual> = individual_results.lock().ok()?.to_vec();
