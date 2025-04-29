@@ -61,7 +61,7 @@ pub fn scrape_subject(
         conferences.into_par_iter().for_each(|conference| {
             let mut fields = fields.clone();
             fields.conference = conference;
-            if district.is_some() || region.is_none() {
+            if district.is_some() || region.is_none() || region.is_some() && region.unwrap() != 0 {
                 if let Some((mut individual, mut team)) = scrape(fields, mute) {
                     // Lock and modify safely
                     individual_results.lock().unwrap().append(&mut individual);
