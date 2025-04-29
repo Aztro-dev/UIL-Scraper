@@ -142,6 +142,11 @@ pub fn perform_scrape(fields: RequestFields) -> Option<(Vec<Individual>, Vec<Tea
         let mut table = document.select(&table_selector);
         let individual_table = table.next()?;
 
+        if fields.subject == Subject::Science {
+            println!("Bruh");
+            table.next()?;
+        }
+
         let team_table = table.next()?;
 
         let mut individuals = Individual::parse_table(individual_table, &fields)?;

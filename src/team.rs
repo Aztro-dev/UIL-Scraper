@@ -77,27 +77,33 @@ impl Team {
         let cell_selector = Selector::parse("td").ok()?;
         let span_selector = Selector::parse("span").unwrap();
 
+        let mut place_index = 0;
         let mut points_index = 0;
         let mut advance_index = 0;
+
+        let school_index = if fields.year > 2022 { 1 } else { 0 };
+        let score_index = 2;
 
         for row in table.select(&row_selector) {
             let cells: Vec<String> = row
                 .select(&cell_selector)
                 .map(|cell| cell.text().collect::<String>())
                 .collect();
-            let place = &cells[0];
-            if place == "Place" {
-                for (index, column) in cells.iter().enumerate() {
-                    if column == "Points" {
-                        points_index = index;
-                        continue;
-                    }
-                    if column == "Advance?" {
-                        advance_index = index;
-                        continue;
-                    }
+            for (index, column) in cells.iter().enumerate() {
+                if column == "Place" {
+                    place_index = index;
+                    continue;
                 }
-                // We continue because this row doesn't contain any data
+                if column == "Points" {
+                    points_index = index;
+                    continue;
+                }
+                if column == "Advance?" {
+                    advance_index = index;
+                    continue;
+                }
+            }
+            if cells[place_index] == "Place" {
                 continue;
             }
             // Extract the direct text (e.g., "#name" or "#address")
@@ -116,21 +122,24 @@ impl Team {
                 }
                 span_text = text;
             }
-            let mut school = cells[1].clone();
-            let _ = school.split_off(school.find(&span_text).unwrap());
-            school = school.trim().to_string();
+            let school = if fields.year > 2022 {
+                let mut school = cells[school_index].clone();
+                let _ = school.split_off(school.find(&span_text).unwrap());
+                school.trim().to_string()
+            } else {
+                cells[school_index].clone()
+            };
+
             let district = fields.district;
             let region = fields.region;
-            let misc = match fields.clone().subject {
-                Subject::ComputerScience => TeamMisc::ComputerScience {
-                    prog: cells[2].parse::<i16>().ok(),
-                },
-                _ => TeamMisc::Normal {},
-            };
             let score = match fields.clone().subject {
-                Subject::ComputerScience => cells[3].parse::<i16>().unwrap_or(0),
-                _ => cells[2].parse::<i16>().unwrap_or(0),
+                Subject::ComputerScience => cells[if fields.year > 2022 { 3 } else { score_index }]
+                    .trim()
+                    .parse::<i16>()
+                    .unwrap_or(0),
+                _ => cells[score_index].trim().parse::<i16>().unwrap_or(0),
             };
+
             let points = cells[points_index].parse::<f32>().unwrap_or(0.0);
 
             let advance_str = if advance_index != 0 {
@@ -144,9 +153,18 @@ impl Team {
                 _ => None,
             };
 
+            let misc = match fields.clone().subject {
+                Subject::ComputerScience => TeamMisc::ComputerScience {
+                    prog: cells[if fields.year > 2022 { 2 } else { 0 }]
+                        .parse::<i16>()
+                        .ok(),
+                },
+                _ => TeamMisc::Normal {},
+            };
+
             let team: Team = Team {
                 score,
-                school,
+                school: school.clone(),
                 conference: fields.clone().conference,
                 district,
                 region,
@@ -236,7 +254,7 @@ impl Team {
                 base.input = format!("{} (prog {:>prog_length$})", base.input, prog);
             } else if matches!(subject, Subject::ComputerScience) {
                 let prog_length = std::cmp::max(
-                    first.get_prog().unwrap().checked_ilog10().unwrap_or(0) as usize + 1,
+                    first.get_prog().unwrap_or(1).checked_ilog10().unwrap_or(0) as usize + 1,
                     "N/A".len(),
                 );
                 base.input = format!("{} (prog {:prog_length$})", base.input, "N/A");

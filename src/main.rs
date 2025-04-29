@@ -163,17 +163,17 @@ fn main() {
         if let Subject::Science = subject {
             let mut biology = individual_results.clone();
             biology.retain_mut(|x| {
-                x.score = x.get_biology().unwrap();
+                x.score = x.get_biology().unwrap_or(0);
                 true
             });
             let mut chemistry = individual_results.clone();
             chemistry.retain_mut(|x| {
-                x.score = x.get_chemistry().unwrap();
+                x.score = x.get_chemistry().unwrap_or(0);
                 true
             });
             let mut physics = individual_results.clone();
             physics.retain_mut(|x| {
-                x.score = x.get_physics().unwrap();
+                x.score = x.get_physics().unwrap_or(0);
                 true
             });
             println!("Individual Biology Scores:");
