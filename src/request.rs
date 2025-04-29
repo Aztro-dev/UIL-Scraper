@@ -256,7 +256,7 @@ pub fn district_as_region(district: Option<u8>) -> Option<u8> {
 #[allow(unreachable_code)]
 #[allow(unused_variables)]
 pub fn old_school(fields: RequestFields) -> String {
-    panic!("{}", "Old school results are currently not supported".red());
+    // panic!("{}", "Old school results are currently not supported".red());
     let level = if fields.district.is_some() {
         "D"
     } else if fields.region.is_some() {
@@ -265,31 +265,35 @@ pub fn old_school(fields: RequestFields) -> String {
         "S"
     };
 
-    let first = "https://utdirect.utexas.edu/nlogon/uil/vlcp_pub_arch.WBX?".to_string();
-    let second = format!(
-        "s_year={}&s_conference={}A&s_level_id={level}&s_level_nbr={}&",
-        fields.year,
-        fields.conference,
-        if fields.district.is_some() {
-            fields.district.unwrap().to_string()
-        } else if fields.region.is_some() {
-            fields.region.unwrap().to_string()
-        } else {
-            "".to_string()
-        }
+    let base = "https://utdirect.utexas.edu/nlogon/uil/vlcp_pub_arch.WBX?".to_string();
+
+    let number = if fields.district.is_some() {
+        fields.district.unwrap().to_string()
+    } else if fields.region.is_some() {
+        fields.region.unwrap().to_string()
+    } else {
+        "".to_string()
+    };
+    let abbr = match fields.subject {
+        Subject::Accounting => "ACC",
+        Subject::Calculator => "CAL",
+        Subject::ComputerApplications => "COM",
+        Subject::ComputerScience => "CSC",
+        Subject::CurrentEvents => "CIE",
+        Subject::SocialStudies => "SOC",
+        Subject::Spelling => "SPV",
+        Subject::Mathematics => "MTH",
+        Subject::NumberSense => "NUM",
+        Subject::Science => "SCI",
+        Subject::Sweepstakes => "",
+        Subject::Rankings => "",
+    };
+
+    let req = format!(
+        "s_year={}&s_conference={}A&s_level_id={level}&s_level_nbr={number}&s_event_abbr={abbr}&s_submit_sw=X",
+        fields.year, fields.conference,
     )
     .to_string();
 
-    let abbr = match fields.subject {
-        Subject::Accounting => "ACC",
-        Subject::ComputerScience => "CSC",
-        _ => "",
-    };
-
-    let third = format!(
-        "s_event_abbr={abbr}&s_submit_sw=X&s_year={}&s_conference={}A&s_level_id=S&s_level_nbr=&s_gender=&s_round=&s_dept=C&s_area_zone=",
-        fields.year, fields.conference
-    );
-
-    first + &second + &third
+    format!("{base}{req}")
 }
