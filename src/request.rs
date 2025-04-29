@@ -230,6 +230,23 @@ impl Subject {
         }
     }
 
+    pub fn to_legacy_string(&self) -> &str {
+        match self {
+            Subject::Accounting => "ACC",
+            Subject::Calculator => "CAL",
+            Subject::ComputerApplications => "COM",
+            Subject::ComputerScience => "CSC",
+            Subject::CurrentEvents => "CIE",
+            Subject::SocialStudies => "SOC",
+            Subject::Spelling => "SPV",
+            Subject::Mathematics => "MTH",
+            Subject::NumberSense => "NUM",
+            Subject::Science => "SCI",
+            Subject::Sweepstakes => "",
+            Subject::Rankings => "",
+        }
+    }
+
     pub fn _list_options() {
         println!("Subjects listed in {} are not fully supported", "red".red());
         // let accounting
@@ -256,7 +273,6 @@ pub fn district_as_region(district: Option<u8>) -> Option<u8> {
 #[allow(unreachable_code)]
 #[allow(unused_variables)]
 pub fn old_school(fields: RequestFields) -> String {
-    // panic!("{}", "Old school results are currently not supported".red());
     let level = if fields.district.is_some() {
         "D"
     } else if fields.region.is_some() {
@@ -274,20 +290,8 @@ pub fn old_school(fields: RequestFields) -> String {
     } else {
         "".to_string()
     };
-    let abbr = match fields.subject {
-        Subject::Accounting => "ACC",
-        Subject::Calculator => "CAL",
-        Subject::ComputerApplications => "COM",
-        Subject::ComputerScience => "CSC",
-        Subject::CurrentEvents => "CIE",
-        Subject::SocialStudies => "SOC",
-        Subject::Spelling => "SPV",
-        Subject::Mathematics => "MTH",
-        Subject::NumberSense => "NUM",
-        Subject::Science => "SCI",
-        Subject::Sweepstakes => "",
-        Subject::Rankings => "",
-    };
+
+    let abbr = fields.subject.to_legacy_string();
 
     let req = format!(
         "s_year={}&s_conference={}A&s_level_id={level}&s_level_nbr={number}&s_event_abbr={abbr}&s_submit_sw=X",
