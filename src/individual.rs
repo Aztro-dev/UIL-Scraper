@@ -105,8 +105,12 @@ impl Individual {
         let row_selector = Selector::parse("tr").ok()?;
         let cell_selector = Selector::parse("td").ok()?;
 
+        let mut place_index = 0;
         let mut points_index = 0;
         let mut advance_index = 0;
+        let school_index = 1;
+        let name_index = if fields.year > 2022 { 2 } else { 0 };
+        let score_index = if fields.year > 2022 { 4 } else { 2 };
 
         for row in table.select(&row_selector) {
             let cells: Vec<String> = row
@@ -114,57 +118,80 @@ impl Individual {
                 .map(|cell| cell.text().collect::<String>())
                 .collect();
 
-            let place = &cells[0];
-            if place == "Place" {
-                for (index, column) in cells.iter().enumerate() {
-                    if column == "Points" {
-                        points_index = index;
-                        continue;
-                    }
-                    if column == "Advance?" {
-                        advance_index = index;
-                        continue;
-                    }
+            for (index, column) in cells.iter().enumerate() {
+                if column == "Place" {
+                    place_index = index;
+                    continue;
                 }
-                // We continue because this row doesn't contain any data
+                if column == "Points" {
+                    points_index = index;
+                    continue;
+                }
+                if column == "Advance?" {
+                    advance_index = index;
+                    continue;
+                }
+            }
+
+            if cells[place_index] == "Place" {
                 continue;
             }
-            let school = cells[1].clone();
-            let name = &cells[2].trim().to_string();
-            let individual_misc: IndividualMisc = match fields.clone().subject {
-                Subject::Science => IndividualMisc::Science {
-                    biology: cells[4].parse::<i16>().unwrap_or(0),
-                    chemistry: cells[5].parse::<i16>().unwrap_or(0),
-                    physics: cells[6].parse::<i16>().unwrap_or(0),
-                },
-                _ => IndividualMisc::Normal {},
-            };
 
-            let advance_str = if advance_index != 0 {
-                &cells[advance_index]
+            let name = if fields.year > 2022 {
+                cells[name_index].trim().to_string()
             } else {
-                &String::new()
+                let split = cells[name_index].trim().split(",");
+                let mut name = String::new();
+                for n in split {
+                    name = n.trim().to_string() + " " + &name.to_string();
+                }
+                name.trim().to_string()
             };
+            let school = cells[school_index].trim().to_string();
+
+            let conference = fields.conference;
+            let district = fields.district;
+            let region = fields.region;
+
+            let score = match fields.subject {
+                Subject::Science => &cells[7],
+                _ => &cells[score_index],
+            }
+            .trim()
+            .parse::<i16>()
+            .unwrap_or(0);
+
+            let points = cells[points_index].parse::<f32>().unwrap_or(0.0);
+
+            let advance_str = &cells[advance_index];
             let advance = match advance_str.as_str() {
                 "Region" | "State" => Some(AdvanceTypeIndividual::Indiv),
                 _ => None,
             };
 
+            let misc: IndividualMisc = if fields.year > 2022 {
+                match fields.clone().subject {
+                    Subject::Science => IndividualMisc::Science {
+                        biology: cells[4].parse::<i16>().unwrap_or(0),
+                        chemistry: cells[5].parse::<i16>().unwrap_or(0),
+                        physics: cells[6].parse::<i16>().unwrap_or(0),
+                    },
+                    _ => IndividualMisc::Normal {},
+                }
+            } else {
+                IndividualMisc::Normal {}
+            };
+
             let individual = Individual {
-                name: name.clone(),
-                school: school.clone(),
-                conference: fields.clone().conference,
-                district: fields.clone().district,
-                region: fields.clone().region,
-                score: cells[match fields.clone().subject {
-                    Subject::Science => 7,
-                    _ => 4,
-                }]
-                .parse::<i16>()
-                .unwrap_or(0),
-                points: cells[points_index].parse::<f32>().unwrap_or(0.0),
+                name,
+                school,
+                conference,
+                district,
+                region,
+                score,
+                points,
                 advance,
-                misc: individual_misc,
+                misc,
             };
             results.push(individual);
         }

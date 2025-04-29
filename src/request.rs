@@ -88,8 +88,8 @@ pub fn request(fields: RequestFields) -> Option<String> {
     let state = fields.get_state();
     let subject: i8 = fields.subject.to_i8();
     let conference = fields.conference;
-    let year = fields.year - 2008;
     let url: String = if fields.year > 2022 {
+        let year = fields.year - 2008;
         format!(
             "https://postings.speechwire.com/r-uil-academics.php?groupingid={subject}&Submit=View+postings&region={region}&district={district}&state={state}&conference={conference}&seasonid={year}"
         )
