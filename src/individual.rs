@@ -1,6 +1,6 @@
 use colored::{Color, ColoredString, Colorize};
 use scraper::{selectable::Selectable, *};
-use std::cmp;
+use std::cmp::{self, Ordering};
 use supports_color::Stream;
 
 use crate::advance::AdvanceTypeIndividual;
@@ -177,7 +177,15 @@ impl Individual {
         results.sort_by(|a, b| {
             let a_score = a.score;
             let b_score = b.score;
-            b_score.cmp(&a_score)
+            if b_score.cmp(&a_score) == Ordering::Equal {
+                if a.conference == b.conference {
+                    a.school.cmp(&b.school)
+                } else {
+                    a.conference.cmp(&b.conference)
+                }
+            } else {
+                b_score.cmp(&a_score)
+            }
         });
 
         results.dedup();
