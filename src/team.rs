@@ -128,7 +128,7 @@ impl Team {
                 school.trim().to_string()
             } else {
                 let mut school = cells[school_index].clone();
-                let _ = school.split_off(school.find(", ").unwrap());
+                let _ = school.split_off(school.find(", ").unwrap_or(school.len()));
                 if school.split_off(school.find("H S").unwrap_or(school.len())) == "H S" {
                     school += "HS";
                 }
