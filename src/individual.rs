@@ -155,6 +155,7 @@ impl Individual {
 
             let score = match fields.subject {
                 Subject::Science => &cells[if fields.year > 2022 { 7 } else { score_index }],
+                Subject::SocialStudies => &cells[if fields.year > 2022 { 6 } else { score_index }],
                 _ => &cells[score_index],
             }
             .trim()
