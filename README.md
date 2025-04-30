@@ -177,20 +177,24 @@ uil_scraper mathematics --state --find "Justin"             # Only show results 
 
 - Included by passing in `--individual-positions <positions>` or `-i <positions>` for short
 - Defaults to 25, and changes the number of individual results that are shown
+- This does NOT hide the team results
 - Example:
 
 ```sh
-uil_scraper mathematics --district --individual-positions 100 # show top 100 results
+uil_scraper mathematics --district --individual-positions 100 # show top 100 (individual) results
+uil_scraper mathematics --district -i 100 # show top 100 (individual) results
 ```
 
 ## TEAM POSITIONS (optional):
 
 - Included by passing in `--team-positions <positions>` or `-t <positions>` for short
 - Defaults to 25, and changes the number of team results that are shown
+- This does NOT hide the individual results
 - Example:
 
 ```sh
-uil_scraper mathematics --district --team-positions 100 # show top 100 results
+uil_scraper mathematics --district --team-positions 100 # show top 100 (team) results
+uil_scraper mathematics --district --t 100 # show top 100 (team) results
 ```
 
 ## MUTE (optional):
