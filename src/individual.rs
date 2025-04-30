@@ -47,7 +47,7 @@ pub enum IndividualMisc {
 }
 
 impl Individual {
-    pub fn get_biology(&self) -> Option<i16> {
+    pub const fn get_biology(&self) -> Option<i16> {
         match self.misc {
             IndividualMisc::Science {
                 biology,
@@ -58,7 +58,7 @@ impl Individual {
         }
     }
 
-    pub fn get_chemistry(&self) -> Option<i16> {
+    pub const fn get_chemistry(&self) -> Option<i16> {
         match self.misc {
             IndividualMisc::Science {
                 biology: _,
@@ -68,7 +68,7 @@ impl Individual {
             _ => None,
         }
     }
-    pub fn get_physics(&self) -> Option<i16> {
+    pub const fn get_physics(&self) -> Option<i16> {
         match self.misc {
             IndividualMisc::Science {
                 biology: _,
@@ -121,15 +121,12 @@ impl Individual {
             for (index, column) in cells.iter().enumerate() {
                 if column == "Place" {
                     place_index = index;
-                    continue;
                 }
                 if column == "Points" {
                     points_index = index;
-                    continue;
                 }
                 if column == "Advance?" {
                     advance_index = index;
-                    continue;
                 }
             }
 
@@ -183,7 +180,7 @@ impl Individual {
                 IndividualMisc::Normal {}
             };
 
-            let individual = Individual {
+            let individual = Self {
                 name,
                 school,
                 conference,
@@ -219,7 +216,7 @@ impl Individual {
         results.dedup();
 
         if positions != 0 {
-            results.resize(cmp::min(results.len(), positions), Individual::default());
+            results.resize(cmp::min(results.len(), positions), Self::default());
         }
 
         let mut longest_individual_name = 0;

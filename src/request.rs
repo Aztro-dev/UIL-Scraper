@@ -20,8 +20,8 @@ impl RequestFields {
             return None;
         }
         string = string.to_lowercase();
-        if string.contains(",") {
-            let mut split = string.split(",");
+        if string.contains(',') {
+            let mut split = string.split(',');
             let left_num = split.next().unwrap().parse::<u8>().ok()?;
             let right_num = split.next().unwrap().parse::<u8>().ok()?;
             let vec = vec![left_num, right_num];
@@ -74,10 +74,10 @@ impl RequestFields {
         }
     }
     fn get_state(&self) -> String {
-        if !self.state {
-            String::new()
-        } else {
+        if self.state {
             String::from("1")
+        } else {
+            String::new()
         }
     }
 }
@@ -184,20 +184,20 @@ pub enum Subject {
 }
 
 impl Subject {
-    fn to_i8(&self) -> i8 {
+    const fn to_i8(&self) -> i8 {
         match *self {
-            Subject::Accounting => 1,
-            Subject::ComputerApplications => 2,
-            Subject::CurrentEvents => 3,
-            Subject::SocialStudies => 6,
-            Subject::Spelling => 7,
-            Subject::Calculator => 8,
-            Subject::ComputerScience => 9,
-            Subject::Mathematics => 10,
-            Subject::NumberSense => 11,
-            Subject::Science => 12,
-            Subject::Sweepstakes => -1,
-            Subject::Rankings => -1,
+            Self::Accounting => 1,
+            Self::ComputerApplications => 2,
+            Self::CurrentEvents => 3,
+            Self::SocialStudies => 6,
+            Self::Spelling => 7,
+            Self::Calculator => 8,
+            Self::ComputerScience => 9,
+            Self::Mathematics => 10,
+            Self::NumberSense => 11,
+            Self::Science => 12,
+            Self::Sweepstakes => -1,
+            Self::Rankings => -1,
         }
     }
 
@@ -219,7 +219,7 @@ impl Subject {
         }
     }
 
-    pub fn to_string(&self) -> &str {
+    pub const fn to_string(&self) -> &str {
         match self {
             Self::Accounting => "Accounting",
             Self::ComputerApplications => "Computer Applications",
@@ -235,20 +235,20 @@ impl Subject {
         }
     }
 
-    pub fn to_legacy_string(&self) -> &str {
+    pub const fn to_legacy_string(&self) -> &str {
         match self {
-            Subject::Accounting => "ACC",
-            Subject::Calculator => "CAL",
-            Subject::ComputerApplications => "COM",
-            Subject::ComputerScience => "CSC",
-            Subject::CurrentEvents => "CIE",
-            Subject::SocialStudies => "SOC",
-            Subject::Spelling => "SPV",
-            Subject::Mathematics => "MTH",
-            Subject::NumberSense => "NUM",
-            Subject::Science => "SCI",
-            Subject::Sweepstakes => "",
-            Subject::Rankings => "",
+            Self::Accounting => "ACC",
+            Self::Calculator => "CAL",
+            Self::ComputerApplications => "COM",
+            Self::ComputerScience => "CSC",
+            Self::CurrentEvents => "CIE",
+            Self::SocialStudies => "SOC",
+            Self::Spelling => "SPV",
+            Self::Mathematics => "MTH",
+            Self::NumberSense => "NUM",
+            Self::Science => "SCI",
+            Self::Sweepstakes => "",
+            Self::Rankings => "",
         }
     }
 
@@ -301,8 +301,7 @@ pub fn old_school(fields: RequestFields) -> String {
     let req = format!(
         "s_year={}&s_conference={}A&s_level_id={level}&s_level_nbr={number}&s_event_abbr={abbr}&s_submit_sw=X",
         fields.year, fields.conference,
-    )
-    .to_string();
+    );
 
     format!("{base}{req}")
 }

@@ -43,7 +43,7 @@ impl Default for Team {
 }
 
 impl Team {
-    pub fn get_prog(&self) -> Option<i16> {
+    pub const fn get_prog(&self) -> Option<i16> {
         match self.misc {
             TeamMisc::Normal => None,
             TeamMisc::ComputerScience { prog } => prog,
@@ -92,15 +92,12 @@ impl Team {
             for (index, column) in cells.iter().enumerate() {
                 if column == "Place" {
                     place_index = index;
-                    continue;
                 }
                 if column == "Points" {
                     points_index = index;
-                    continue;
                 }
                 if column == "Advance?" {
                     advance_index = index;
-                    continue;
                 }
             }
             if cells[place_index] == "Place" {
@@ -122,18 +119,18 @@ impl Team {
                 }
                 span_text = text;
             }
-            let school = if fields.year > 2022 {
-                let mut school = cells[school_index].clone();
+            let mut school = cells[school_index].clone();
+
+            if fields.year > 2022 {
                 let _ = school.split_off(school.find(&span_text).unwrap());
-                school.trim().to_string()
             } else {
-                let mut school = cells[school_index].clone();
                 let _ = school.split_off(school.find(", ").unwrap_or(school.len()));
                 if school.split_off(school.find("H S").unwrap_or(school.len())) == "H S" {
                     school += "HS";
                 }
-                school.trim().to_string()
-            };
+            }
+
+            let school = school.trim().to_string();
 
             let district = fields.district;
             let region = fields.region;
@@ -167,7 +164,7 @@ impl Team {
                 _ => TeamMisc::Normal {},
             };
 
-            let team: Team = Team {
+            let team: Self = Self {
                 score,
                 school: school.clone(),
                 conference: fields.clone().conference,
@@ -195,7 +192,7 @@ impl Team {
         results.dedup();
 
         if positions != 0 {
-            results.resize(cmp::min(results.len(), positions), Team::default());
+            results.resize(cmp::min(results.len(), positions), Self::default());
         }
 
         let mut longest_team_name = 0;
@@ -355,7 +352,7 @@ impl Team {
         // u8: district or region
         // u8: conference
         // i16: score
-        let mut winning_teams: HashMap<(u8, u8), Team> = HashMap::new();
+        let mut winning_teams: HashMap<(u8, u8), Self> = HashMap::new();
         for team in results.iter() {
             let location = team.district.unwrap_or(team.region.unwrap_or(0));
             winning_teams
@@ -366,7 +363,7 @@ impl Team {
         // u8: region or district
         // u8: conference
         // i16: score
-        let mut wildcarding_teams: HashMap<(u8, u8), Team> = HashMap::new();
+        let mut wildcarding_teams: HashMap<(u8, u8), Self> = HashMap::new();
 
         for team in results.iter() {
             if team.district.is_some() {

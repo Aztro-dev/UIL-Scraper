@@ -149,7 +149,7 @@ fn main() {
                 .iter()
                 .map(|individual| {
                     let mut copy = individual.clone();
-                    copy.score = copy.points as i16;
+                    copy.score = copy.points.round() as i16;
                     copy
                 })
                 .collect();
@@ -160,7 +160,7 @@ fn main() {
             cli.individual_positions.unwrap_or(25),
         );
         println!();
-        if let Subject::Science = subject {
+        if subject == Subject::Science {
             let mut biology = individual_results.clone();
             biology.retain_mut(|x| {
                 x.score = x.get_biology().unwrap_or(0);
@@ -198,26 +198,22 @@ fn main() {
                             copy.points += indiv.points;
                         }
                     }
-                    copy.score = copy.points as i16;
+                    copy.score = copy.points.round() as i16;
                     copy.misc = TeamMisc::Normal;
                     copy
                 })
                 .collect();
         }
         println!("Team Scores:");
-        Team::display_results(
-            team_results.to_vec(),
-            subject,
-            cli.team_positions.unwrap_or(25),
-        );
+        Team::display_results(team_results, subject, cli.team_positions.unwrap_or(25));
     }
 }
 
 pub fn find_level(cli: &mut Cli) {
-    let subject = Subject::from_str(&cli.subject).unwrap();
+    let subject = Subject::from_str(&cli.subject).unwrap_or(Subject::Mathematics);
     let year = cli
         .year
-        .unwrap_or(chrono::Utc::now().year().try_into().unwrap());
+        .unwrap_or(chrono::Utc::now().year().try_into().unwrap_or(2004));
 
     while cli.district.is_none() && cli.region.is_none() && !cli.state {
         println!(
