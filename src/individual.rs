@@ -196,7 +196,7 @@ impl Individual {
         Some(results)
     }
 
-    pub fn display_results(mut results: Vec<Self>, positions: usize) {
+    pub fn display_results(mut results: Vec<Self>, positions: usize, find: &Option<String>) {
         let support = supports_color::on(Stream::Stdout);
 
         results.sort_by(|a, b| {
@@ -215,17 +215,61 @@ impl Individual {
 
         results.dedup();
 
-        if positions != 0 {
+        if positions != 0 && find.is_none() {
             results.resize(cmp::min(results.len(), positions), Self::default());
         }
 
         let mut longest_individual_name = 0;
 
         for individual in results.iter() {
-            if individual.name.len() > longest_individual_name {
-                longest_individual_name = individual.name.len();
+            let name = individual.name.clone();
+            let school = individual.school.clone();
+
+            if name.len() < longest_individual_name {
+                continue;
             }
+            if find.is_none() {
+                longest_individual_name = name.len();
+                continue;
+            }
+            let find_name = find.clone().unwrap_or_default();
+
+            if !name.contains(&find_name) && !school.contains(&find_name) {
+                continue;
+            }
+
+            longest_individual_name = individual.name.len();
         }
+
+        let place_length = if find.is_none() {
+            results.len().checked_ilog10().unwrap_or(0) as usize + 1
+        } else {
+            let mut previous_score = results.first().unwrap().score;
+            let mut previous_place = 0;
+            let mut longest_place = 0;
+            for (place, individual) in results.iter().enumerate() {
+                let name = individual.name.clone();
+                let school = individual.school.clone();
+                let score = individual.score;
+
+                let place = if score == previous_score {
+                    previous_place
+                } else {
+                    place
+                };
+
+                if score != previous_score {
+                    previous_score = score;
+                }
+                previous_place = place;
+
+                if name.contains(&find.clone().unwrap()) || school.contains(&find.clone().unwrap())
+                {
+                    longest_place = place;
+                }
+            }
+            longest_place.checked_ilog10().unwrap_or(0) as usize + 1
+        };
 
         let score_length =
             results.first().unwrap().score.checked_ilog10().unwrap_or(0) as usize + 1;
@@ -234,6 +278,8 @@ impl Individual {
         let mut previous_place = 0;
         for (place, individual) in results.iter().enumerate() {
             let name = individual.name.clone();
+            let school = individual.school.clone();
+            let conference = individual.conference;
             let score = individual.score;
             let advance = &individual.advance;
 
@@ -248,7 +294,11 @@ impl Individual {
             }
             previous_place = place;
 
-            let place_length = results.len().checked_ilog10().unwrap_or(0) as usize + 1;
+            if let Some(find_name) = find.clone() {
+                if !name.contains(&find_name) && !school.contains(&find_name) {
+                    continue;
+                }
+            }
 
             let mut base: ColoredString = format!(
                 "{:place_length$} {:longest_individual_name$} => {:>score_length$}",
@@ -273,9 +323,6 @@ impl Individual {
 
                 _ => base.fgcolor = None,
             };
-
-            let school = individual.school.clone();
-            let conference = individual.conference;
 
             let mut conference_str: ColoredString = match conference {
                 1 => "1A".white(),

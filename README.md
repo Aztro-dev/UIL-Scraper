@@ -152,13 +152,25 @@ uil_scraper mathematics --district --conference 41   # District 1A to 4A results
 ## YEAR (optional):
 
 - Included by passing in `--year <year>`
-- Only supported values are 2023-2025, because this utility scrapes SpeechWire specifically.
 - The default value is 2025, which would be the year if you didn't include this field at all.
+- You can search for any event from 2004 - present, as this utility only scrapes [legacy](https://utdirect.utexas.edu/nlogon/uil/vlcp_pub_arch.WBX) and [current](https://postings.speechwire.com/r-uil.php) postings
 - Examples:
 
 ```sh
 uil_scraper mathematics --state --year 2024 # 2024 state results
 uil_scraper mathematics --state             # 2025 state results
+```
+
+## FIND (optional):
+
+- Included by passing in `--find "<school or name>"`
+- Finds results with people/schools that contain the string passed in by find
+- This overrides the default limit of only showing 25 individuals/teams, so passing in `--find ""` would show ALL results
+- Examples:
+
+```sh
+uil_scraper mathematics --state --find "Dallas Sci. & Eng." # Only show results from the Dallas Sci. & Eng. people/school
+uil_scraper mathematics --state --find "Justin"             # Only show results from people/schools named Justin
 ```
 
 ## INDIVIDUAL POSITIONS (optional):
@@ -195,25 +207,35 @@ uil_scraper mathematics --district --mute
 
 - COMPARE:
   - PERSON1 (required):
+
     - A string defining the name of the individual or school you want to compare
     - Example: "Warith Rahman"
+
   - PERSON2 (required):
+
     - A string defining the name of other the individual or school you want to compare
     - Example: "Anthony Xu"
+
   - CONFERENCES (required):
+
     - A pair of values separated by a comma that defines the conferences of each of the people
     - Example: `--conferences 1A,4A`
+
   - LEVEL (required):
+
     - A flag defining the level of the competition.
     - Example: `--district`
     - Example: `--region`
     - Example: `--state`
+
   - Other fields:
+
     - Because of how weird CLIs are, in order to specify something like the year, you have to use this syntax:
     - `uil_scraper -- --year 2024 <subject> compare ...`
     - Note the two dashes before the two normal dashes, separated by a space.
+
   - Examples:
- 
+
     ```sh
     uil_scraper cs compare "Justin Nguyen" "Sri Abhinav Thatavarthi" --conferences 4,5 --district
     uil_scraper -- --year 2024 rank compare "Justin Nguyen" "Warith Rahman" --conferences 4,6 --state

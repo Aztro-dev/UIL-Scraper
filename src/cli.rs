@@ -27,6 +27,10 @@ pub struct Cli {
     #[arg(short, long, value_name = "YEAR")]
     pub year: Option<u16>,
 
+    /// Find a specific school or person in the results
+    #[arg(short, long, value_name = "FIND")]
+    pub find: Option<String>,
+
     /// Describes how many positions to show for the individual results
     /// Defaults to 25, with 0 being all teams
     #[arg(short, long, value_name = "INDIVIDUAL POSITIONS")]

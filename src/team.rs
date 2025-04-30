@@ -180,7 +180,12 @@ impl Team {
         Some(results)
     }
 
-    pub fn display_results(mut results: Vec<Self>, subject: Subject, positions: usize) {
+    pub fn display_results(
+        mut results: Vec<Self>,
+        subject: Subject,
+        positions: usize,
+        find: &Option<String>,
+    ) {
         let support = supports_color::on(Stream::Stdout);
 
         results.sort_by(|a, b| {
@@ -191,20 +196,57 @@ impl Team {
 
         results.dedup();
 
-        if positions != 0 {
+        if positions != 0 && find.is_none() {
             results.resize(cmp::min(results.len(), positions), Self::default());
         }
 
         let mut longest_team_name = 0;
         for team in results.iter() {
-            if team.school.len() > longest_team_name {
-                longest_team_name = team.school.len();
+            if team.school.len() < longest_team_name {
+                continue;
             }
+            if find.is_none() {
+                longest_team_name = team.school.len();
+                continue;
+            }
+            let find_name = find.clone().unwrap_or_default();
+            if !team.school.contains(&find_name) {
+                continue;
+            }
+            longest_team_name = team.school.len();
         }
+
+        let place_length = if find.is_none() {
+            results.len().checked_ilog10().unwrap_or(0) as usize + 1
+        } else {
+            let mut previous_score = results.first().unwrap().score;
+            let mut previous_place = 0;
+            let mut longest_place = 0;
+            for (place, team) in results.iter().enumerate() {
+                let school = team.school.clone();
+                let score = team.score;
+
+                let place = if score == previous_score {
+                    previous_place
+                } else {
+                    place
+                };
+
+                if score != previous_score {
+                    previous_score = score;
+                }
+                previous_place = place;
+
+                if school.contains(&find.clone().unwrap()) {
+                    longest_place = place;
+                }
+            }
+            longest_place.checked_ilog10().unwrap_or(0) as usize + 1
+        };
 
         let first = results.first().unwrap();
         let score_length = first.score.checked_ilog10().unwrap_or(0) as usize + 1;
-        let mut previous_score = results.first().unwrap().score;
+        let mut previous_score = first.score;
         let mut previous_place = 0;
 
         for (place, team) in results.iter().enumerate() {
@@ -222,7 +264,11 @@ impl Team {
             }
             previous_place = place;
 
-            let place_length = results.len().checked_ilog10().unwrap_or(0) as usize + 1;
+            if let Some(find_name) = find.clone() {
+                if !school.contains(&find_name) {
+                    continue;
+                }
+            }
 
             let mut base: ColoredString = format!(
                 "{:place_length$} {:longest_team_name$} => {:>score_length$}",

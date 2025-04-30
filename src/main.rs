@@ -158,6 +158,7 @@ fn main() {
         Individual::display_results(
             individual_results.clone(),
             cli.individual_positions.unwrap_or(25),
+            &cli.find,
         );
         println!();
         if subject == Subject::Science {
@@ -177,13 +178,17 @@ fn main() {
                 true
             });
             println!("Individual Biology Scores:");
-            Individual::display_results(biology, cli.individual_positions.unwrap_or(25));
+            Individual::display_results(biology, cli.individual_positions.unwrap_or(25), &cli.find);
             println!();
             println!("Individual Chemistry Scores:");
-            Individual::display_results(chemistry, cli.individual_positions.unwrap_or(25));
+            Individual::display_results(
+                chemistry,
+                cli.individual_positions.unwrap_or(25),
+                &cli.find,
+            );
             println!();
             println!("Individual Physics Scores:");
-            Individual::display_results(physics, cli.individual_positions.unwrap_or(25));
+            Individual::display_results(physics, cli.individual_positions.unwrap_or(25), &cli.find);
             println!();
         }
     }
@@ -205,7 +210,12 @@ fn main() {
                 .collect();
         }
         println!("Team Scores:");
-        Team::display_results(team_results, subject, cli.team_positions.unwrap_or(25));
+        Team::display_results(
+            team_results,
+            subject,
+            cli.team_positions.unwrap_or(25),
+            &cli.find,
+        );
     }
 }
 
