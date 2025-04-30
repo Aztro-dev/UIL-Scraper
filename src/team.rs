@@ -127,7 +127,12 @@ impl Team {
                 let _ = school.split_off(school.find(&span_text).unwrap());
                 school.trim().to_string()
             } else {
-                cells[school_index].clone()
+                let mut school = cells[school_index].clone();
+                let _ = school.split_off(school.find(", ").unwrap());
+                if school.split_off(school.find("H S").unwrap_or(school.len())) == "H S" {
+                    school += "HS";
+                }
+                school.trim().to_string()
             };
 
             let district = fields.district;
