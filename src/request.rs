@@ -143,7 +143,6 @@ pub fn perform_scrape(fields: RequestFields) -> Option<(Vec<Individual>, Vec<Tea
         let individual_table = table.next()?;
 
         if fields.subject == Subject::Science {
-            println!("Bruh");
             table.next()?;
         }
 
@@ -181,6 +180,7 @@ pub enum Subject {
     Sweepstakes,
     /// Custom rankings by my glorious king Justin Nguyen
     Rankings,
+    Highscores,
 }
 
 impl Subject {
@@ -198,6 +198,7 @@ impl Subject {
             Self::Science => 12,
             Self::Sweepstakes => -1,
             Self::Rankings => -1,
+            Self::Highscores => -1,
         }
     }
 
@@ -215,6 +216,7 @@ impl Subject {
             "science" | "sci" => Some(Self::Science),
             "sweepstakes" | "overall" => Some(Self::Sweepstakes),
             "rank" | "rankings" => Some(Self::Rankings),
+            "highscores" | "hs" | "high" => Some(Self::Highscores),
             _ => None,
         }
     }
@@ -249,6 +251,7 @@ impl Subject {
             Self::Science => "SCI",
             Self::Sweepstakes => "",
             Self::Rankings => "",
+            Self::Highscores => "",
         }
     }
 

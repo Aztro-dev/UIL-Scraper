@@ -1,3 +1,9 @@
+use std::sync::{Arc, Mutex};
+
+use chrono::Datelike;
+use colored::{ColoredString, Colorize};
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
+
 use crate::{
     Individual,
     individual::IndividualMisc,
@@ -237,4 +243,184 @@ pub fn sweepstakes(
         println!("{}: {} points", indiv.name.clone(), indiv.points);
     }
     Some((individual_results, team_results))
+}
+
+pub fn highscores(request_fields: RequestFields, conferences: Vec<u8>, mute: bool) {
+    let supported_subjects = [
+        Subject::Accounting,
+        Subject::ComputerScience,
+        Subject::Mathematics,
+        Subject::NumberSense,
+        Subject::Calculator,
+        Subject::Science,
+        Subject::Spelling,
+    ];
+    let current_year: u16 = chrono::Utc::now().year() as u16;
+    let mut output_strings: Vec<ColoredString> = Vec::new();
+    for subject in supported_subjects.clone() {
+        let individual_results = Arc::new(Mutex::new(Vec::new()));
+        let team_results = Arc::new(Mutex::new(Vec::new()));
+
+        let fields = request_fields.clone();
+        (2004..=current_year).into_par_iter().for_each(|year| {
+            let fields = RequestFields {
+                district: fields.district,
+                region: fields.region,
+                state: fields.state,
+                conference: 0,
+                subject: subject.clone(),
+                year,
+            };
+            let results = scrape_subject(fields.clone(), conferences.clone(), mute);
+            if results.is_some() {
+                let (mut indiv, mut team) = results.unwrap();
+
+                if !indiv.is_empty() {
+                    indiv.sort_by(|a, b| {
+                        let a_score = a.score;
+                        let b_score = b.score;
+                        b_score.cmp(&a_score)
+                    });
+
+                    let top_indiv = indiv.first();
+                    let top_indiv_score = top_indiv.unwrap().score;
+                    indiv.retain(|a| a.score == top_indiv_score);
+
+                    let year_str = year.to_string();
+
+                    indiv.iter_mut().for_each(|indiv| {
+                        indiv.school = format!("{year_str} - {}", indiv.school);
+                    });
+
+                    individual_results.lock().unwrap().append(&mut indiv);
+                }
+
+                if !team.is_empty() {
+                    team.sort_by(|a, b| {
+                        let a_score = a.score;
+                        let b_score = b.score;
+                        b_score.cmp(&a_score)
+                    });
+
+                    let top_team = team.first();
+                    let top_team_score = top_team.unwrap().score;
+                    team.retain(|a| a.score == top_team_score);
+
+                    let year_str = year.to_string();
+
+                    team.iter_mut().for_each(|team| {
+                        team.school = format!("{year_str} - {}", team.school);
+                    });
+
+                    team_results.lock().unwrap().append(&mut team);
+                }
+            }
+        });
+        output_strings.push(format!("{} Individual Results: ", subject.to_string()).into());
+        {
+            let mut results = individual_results.lock().unwrap();
+
+            results.sort_by(|a, b| {
+                let a_score = a.score;
+                let b_score = b.score;
+                b_score.cmp(&a_score)
+            });
+
+            let top_score = results.first().unwrap().score;
+            results.retain(|indiv| indiv.score == top_score);
+
+            results.sort_by(|a, b| {
+                let a_year = &a.school[0..4];
+                let b_year = &b.school[0..4];
+
+                a_year.cmp(b_year)
+            });
+
+            let mut longest_name_len = 0;
+            let score_len = top_score.checked_ilog10().unwrap_or(0) as usize + 1;
+
+            results.iter().for_each(|indiv| {
+                longest_name_len = std::cmp::max(longest_name_len, indiv.name.len());
+            });
+
+            for indiv in results.iter() {
+                let conference_str: ColoredString = match indiv.conference {
+                    1 => "1A".white(),
+                    2 => "2A".yellow(),
+                    3 => "3A".bright_blue(),
+                    4 => "4A".green(),
+                    5 => "5A".red(),
+                    6 => "6A".magenta(),
+                    _ => "".into(),
+                };
+                let base: ColoredString = format!(
+                    "{:longest_name_len$} => {:>score_len$} ({conference_str} {})",
+                    indiv.name, indiv.score, indiv.school,
+                )
+                .into();
+
+                output_strings.push(base);
+            }
+        }
+        output_strings.push("".into());
+        output_strings.push(format!("{} Team Results: ", subject.to_string()).into());
+        {
+            let mut results = team_results.lock().unwrap();
+
+            results.sort_by(|a, b| {
+                let a_score = a.score;
+                let b_score = b.score;
+                b_score.cmp(&a_score)
+            });
+
+            let top_score = results.first().unwrap().score;
+            results.retain(|team| team.score == top_score);
+
+            results.sort_by(|a, b| {
+                let a_year = &a.school[0..4];
+                let b_year = &b.school[0..4];
+
+                a_year.cmp(b_year)
+            });
+
+            let mut longest_name_len = 0;
+            let score_len = top_score.checked_ilog10().unwrap_or(0) as usize + 1;
+
+            results.iter().for_each(|team| {
+                longest_name_len = std::cmp::max(longest_name_len, team.school[7..].len());
+            });
+
+            for team in results.iter() {
+                let conference_str: ColoredString = match team.conference {
+                    1 => "1A".white(),
+                    2 => "2A".yellow(),
+                    3 => "3A".bright_blue(),
+                    4 => "4A".green(),
+                    5 => "5A".red(),
+                    6 => "6A".magenta(),
+                    _ => "".into(),
+                };
+                let base: ColoredString = format!(
+                    "{:longest_name_len$} => {:>score_len$} ({conference_str} {})",
+                    &team.school[7..],
+                    team.score,
+                    &team.school[0..4],
+                )
+                .into();
+
+                output_strings.push(base);
+            }
+        }
+        if fields.district.is_some() {
+            use std::{thread, time};
+
+            println!("Pausing to (hopefully) prevent rate limiting");
+            let second = time::Duration::from_millis(500);
+
+            thread::sleep(second);
+        }
+    }
+    for string in output_strings {
+        println!("{string}");
+    }
 }

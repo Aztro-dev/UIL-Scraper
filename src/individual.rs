@@ -144,7 +144,13 @@ impl Individual {
                 }
                 name.trim().to_string()
             };
-            let school = cells[school_index].trim().to_string();
+            let mut school = cells[school_index].trim().to_string();
+            if fields.year <= 2022 {
+                let _ = school.split_off(school.find(", ").unwrap_or(school.len()));
+                if school.split_off(school.find("H S").unwrap_or(school.len())) == "H S" {
+                    school += "HS";
+                }
+            }
 
             let conference = fields.conference;
             let district = fields.district;

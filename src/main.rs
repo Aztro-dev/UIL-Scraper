@@ -39,6 +39,25 @@ fn main() {
     let conferences =
         RequestFields::parse_range(cli.conference.unwrap_or(String::from("16"))).unwrap();
 
+    if cli.command.is_none() {
+        #[allow(unused_variables)]
+        let fields = RequestFields {
+            district: cli.district,
+            region: cli.region,
+            state: cli.state,
+            subject: subject.clone(),
+            conference: 0,
+            year,
+        };
+        if subject == Subject::Highscores {
+            println!("{}", "Highscores have been temporarily disabled".red());
+            return;
+            #[allow(unreachable_code)]
+            overall::highscores(fields, conferences.clone(), cli.mute);
+            return;
+        }
+    }
+
     let results = if cli.command.is_none() {
         let fields = RequestFields {
             district: cli.district,
@@ -53,15 +72,15 @@ fn main() {
             Subject::Sweepstakes => overall::sweepstakes(fields, conferences.clone(), cli.mute),
             _ => scrape_subject(fields, conferences.clone(), cli.mute),
         }
-    } else {
-        let Commands::Compare {
-            person_a: _,
-            person_b: _,
-            conferences,
-            district,
-            region,
-            state,
-        } = cli.command.clone().unwrap();
+    } else if let Some(Commands::Compare {
+        person_a: _,
+        person_b: _,
+        conferences,
+        district,
+        region,
+        state,
+    }) = cli.command.clone()
+    {
         let conferences = RequestFields::parse_range(conferences)
             .expect("Conferences entered in the wrong order");
 
@@ -89,6 +108,8 @@ fn main() {
         } else {
             Some((individual_results, team_results))
         }
+    } else {
+        None
     };
     if results.is_none() {
         println!("{}", "Didn't return any results".red());
@@ -106,10 +127,8 @@ fn main() {
             region: _,
             state: _,
         } = cli.command.clone().unwrap();
-        {
-            individual_results.retain(|x| x.name == person_a || x.name == person_b);
-            team_results.retain(|x| x.school == person_a || x.school == person_b);
-        }
+        individual_results.retain(|x| x.name == person_a || x.name == person_b);
+        team_results.retain(|x| x.school == person_a || x.school == person_b);
     }
 
     if !team_results.is_empty() && !individual_results.is_empty() {

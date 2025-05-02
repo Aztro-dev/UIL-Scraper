@@ -97,6 +97,7 @@ pub fn scrape_subject(
 pub fn scrape(fields: RequestFields, mute: bool) -> Option<(Vec<Individual>, Vec<Team>)> {
     let conference = fields.conference;
     let level;
+    let year = fields.year;
     if fields.state {
         level = String::from("States");
     } else if fields.region.is_some() {
@@ -108,8 +109,8 @@ pub fn scrape(fields: RequestFields, mute: bool) -> Option<(Vec<Individual>, Vec
     }
     let subject = fields.subject.to_string();
     let support = supports_color::on(Stream::Stdout);
-    let mut unavailable = format!("{conference}A {subject} {level} unavailable").red();
-    let mut completed = format!("{conference}A {subject} {level} completed").green();
+    let mut unavailable = format!("{year} {conference}A {subject} {level} unavailable").red();
+    let mut completed = format!("{year} {conference}A {subject} {level} completed").green();
     match support {
         Some(support) => {
             if !support.has_basic {
