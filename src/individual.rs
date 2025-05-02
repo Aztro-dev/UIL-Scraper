@@ -221,10 +221,6 @@ impl Individual {
 
         results.dedup();
 
-        if positions != 0 && find.is_none() {
-            results.resize(cmp::min(results.len(), positions), Self::default());
-        }
-
         let mut longest_individual_name = 0;
 
         for individual in results.iter() {
@@ -299,6 +295,10 @@ impl Individual {
                 previous_score = score;
             }
             previous_place = place;
+
+            if positions != 0 && find.is_none() && place >= cmp::min(results.len(), positions) {
+                break;
+            }
 
             if let Some(find_name) = find.clone() {
                 if !name.contains(&find_name) && !school.contains(&find_name) {

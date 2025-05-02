@@ -196,10 +196,6 @@ impl Team {
 
         results.dedup();
 
-        if positions != 0 && find.is_none() {
-            results.resize(cmp::min(results.len(), positions), Self::default());
-        }
-
         let mut longest_team_name = 0;
         for team in results.iter() {
             if team.school.len() < longest_team_name {
@@ -263,6 +259,10 @@ impl Team {
                 previous_score = score;
             }
             previous_place = place;
+
+            if positions != 0 && find.is_none() && place >= cmp::min(results.len(), positions) {
+                break;
+            }
 
             if let Some(find_name) = find.clone() {
                 if !school.contains(&find_name) {
