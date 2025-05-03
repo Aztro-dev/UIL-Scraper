@@ -24,6 +24,7 @@ pub fn rankings(
         Subject::NumberSense,
         Subject::Calculator,
         Subject::Science,
+        Subject::SocialStudies,
         Subject::Spelling,
     ];
     let mut individual_results: Vec<Individual> = Vec::new();
