@@ -45,6 +45,10 @@ pub struct Cli {
     #[arg(short, long)]
     pub mute: bool,
 
+    /// Shows the highest scores across all conferences for the specified subject
+    #[arg(long)]
+    pub highscores: bool,
+
     #[command(subcommand)]
     pub command: Option<Commands>,
 }

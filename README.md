@@ -173,6 +173,19 @@ uil_scraper mathematics --state --find "Dallas Sci. & Eng." # Only show results 
 uil_scraper mathematics --state --find "Justin"             # Only show results from people/schools named Justin
 ```
 
+## HIGHSCORES (optional):
+
+- Included by passing in `--highscores `
+- Finds the highest scores in all of (recent) history for the specified subject
+- For region and district, these values might be rate limited, so you will likely have to wait some time and might have incomplete results
+- This option overrides the year flag
+- Examples:
+
+```sh
+uil_scraper mathematics --state --highscores # Show highest score in recent history for general mathematics at state
+uil_scraper mathematics --region 1 --highscores # Show the highest score in recent history for general mathematics in region 1
+```
+
 ## INDIVIDUAL POSITIONS (optional):
 
 - Included by passing in `--individual-positions <positions>` or `-i <positions>` for short

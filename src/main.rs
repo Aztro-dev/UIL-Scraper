@@ -49,10 +49,7 @@ fn main() {
             conference: 0,
             year,
         };
-        if subject == Subject::Highscores {
-            println!("{}", "Highscores have been temporarily disabled".red());
-            return;
-            #[allow(unreachable_code)]
+        if cli.highscores {
             overall::highscores(fields, conferences.clone(), cli.mute);
             return;
         }
