@@ -6,6 +6,7 @@ use colored::{ColoredString, Colorize};
 use crate::{
     Individual,
     individual::IndividualMisc,
+    overall,
     request::{RequestFields, Subject},
     scrape::scrape_subject,
     team::{Team, TeamMisc},
@@ -292,9 +293,17 @@ pub fn highscores(request_fields: RequestFields, conferences: Vec<u8>, mute: boo
                 4
             } else {
                 1
+            }
+            * match subject {
+                Subject::Rankings => 8,
+                _ => 1,
             };
 
-        let results = scrape_subject(fields.clone(), conferences.clone(), mute);
+        let results = match subject {
+            Subject::Rankings => overall::rankings(fields.clone(), conferences.clone(), mute),
+            _ => scrape_subject(fields.clone(), conferences.clone(), mute),
+        };
+
         if results.is_some() {
             let (mut indiv, mut team) = results.unwrap();
 
@@ -355,6 +364,13 @@ pub fn highscores(request_fields: RequestFields, conferences: Vec<u8>, mute: boo
 
             println!("Pausing to (hopefully) prevent rate limiting");
             let second = time::Duration::from_millis(2000);
+
+            thread::sleep(second);
+        } else {
+            use std::{thread, time};
+
+            println!("Pausing to (hopefully) prevent rate limiting");
+            let second = time::Duration::from_millis(1000);
 
             thread::sleep(second);
         }

@@ -199,6 +199,12 @@ impl Individual {
             };
             results.push(individual);
         }
+
+        // if fields.subject == Subject::Science {
+        //     let mut copy = results.clone();
+        //     copy.sort_by_key(|a| a.get_biology());
+        // }
+
         Some(results)
     }
 
