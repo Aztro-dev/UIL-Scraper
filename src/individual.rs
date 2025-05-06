@@ -200,10 +200,38 @@ impl Individual {
             results.push(individual);
         }
 
-        // if fields.subject == Subject::Science {
-        //     let mut copy = results.clone();
-        //     copy.sort_by_key(|a| a.get_biology());
-        // }
+        if fields.subject == Subject::Science {
+            let mut copy = results.clone();
+            copy.sort_by_key(|a| std::cmp::Reverse(a.get_biology()));
+            let top_bio = copy
+                .first()
+                .unwrap_or(&Individual::default())
+                .get_biology()
+                .unwrap();
+
+            copy.sort_by_key(|a| std::cmp::Reverse(a.get_chemistry()));
+            let top_chem = copy
+                .first()
+                .unwrap_or(&Individual::default())
+                .get_chemistry()
+                .unwrap();
+
+            copy.sort_by_key(|a| std::cmp::Reverse(a.get_physics()));
+            let top_phys = copy
+                .first()
+                .unwrap_or(&Individual::default())
+                .get_physics()
+                .unwrap();
+
+            for result in results.iter_mut() {
+                if result.get_biology().unwrap() == top_bio
+                    || result.get_chemistry().unwrap() == top_chem
+                    || result.get_physics().unwrap() == top_phys
+                {
+                    result.advance = Some(AdvanceTypeIndividual::Indiv);
+                }
+            }
+        }
 
         Some(results)
     }
