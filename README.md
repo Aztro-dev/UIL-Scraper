@@ -26,7 +26,7 @@ This was originally inspired by a Python script written by Warith. While this Ru
   - Integrated terminal in your IDE
   - Alacritty
   - Kitty
-  - Basically anything but CMD or PowerShell
+  - Basically anything but PowerShell
 
 # Instructions/Installation
 
