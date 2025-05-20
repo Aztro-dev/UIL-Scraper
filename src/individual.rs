@@ -207,26 +207,26 @@ impl Individual {
                 .first()
                 .unwrap_or(&Individual::default())
                 .get_biology()
-                .unwrap();
+                .unwrap_or(0);
 
             copy.sort_by_key(|a| std::cmp::Reverse(a.get_chemistry()));
             let top_chem = copy
                 .first()
                 .unwrap_or(&Individual::default())
                 .get_chemistry()
-                .unwrap();
+                .unwrap_or(0);
 
             copy.sort_by_key(|a| std::cmp::Reverse(a.get_physics()));
             let top_phys = copy
                 .first()
                 .unwrap_or(&Individual::default())
                 .get_physics()
-                .unwrap();
+                .unwrap_or(0);
 
             for result in results.iter_mut() {
-                if result.get_biology().unwrap() == top_bio
-                    || result.get_chemistry().unwrap() == top_chem
-                    || result.get_physics().unwrap() == top_phys
+                if result.get_biology().unwrap_or(-120) == top_bio
+                    || result.get_chemistry().unwrap_or(-120) == top_chem
+                    || result.get_physics().unwrap_or(-120) == top_phys
                 {
                     result.advance = Some(AdvanceTypeIndividual::Indiv);
                 }

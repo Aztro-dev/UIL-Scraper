@@ -386,7 +386,6 @@ pub fn highscores(request_fields: RequestFields, conferences: Vec<u8>, mute: boo
         });
 
         let top_score = results.first().unwrap().score;
-        results.retain(|indiv| indiv.score == top_score);
 
         results.sort_by(|a, b| {
             let a_year = &a.school[0..4];
@@ -420,8 +419,34 @@ pub fn highscores(request_fields: RequestFields, conferences: Vec<u8>, mute: boo
 
             println!("{base}");
         }
+        println!();
+
+        if subject == Subject::Science {
+            results.iter_mut().for_each(|indiv| {
+                indiv.score = indiv.get_biology().unwrap_or(-120);
+            });
+            results.sort_by(|a, b| a.score.cmp(&b.score));
+            for indiv in results.iter() {
+                let conference_str: ColoredString = match indiv.conference {
+                    1 => "1A".white(),
+                    2 => "2A".yellow(),
+                    3 => "3A".bright_blue(),
+                    4 => "4A".green(),
+                    5 => "5A".red(),
+                    6 => "6A".magenta(),
+                    _ => "".into(),
+                };
+                let base: ColoredString = format!(
+                    "{:longest_name_len$} => {:>score_len$} ({conference_str} {})",
+                    indiv.name, indiv.score, indiv.school,
+                )
+                .into();
+
+                println!("{base}");
+            }
+        }
     }
-    println!();
+
     println!("{} Team Results: ", subject.to_string());
     {
         let mut results = team_results.lock().unwrap();
