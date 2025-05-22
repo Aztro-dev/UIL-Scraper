@@ -5,6 +5,7 @@ use colored::{ColoredString, Colorize};
 
 use crate::{
     Individual,
+    cli::Cli,
     individual::IndividualMisc,
     overall,
     request::{RequestFields, Subject},
@@ -246,7 +247,8 @@ pub fn sweepstakes(
     Some((individual_results, team_results))
 }
 
-pub fn highscores(request_fields: RequestFields, conferences: Vec<u8>, mute: bool) {
+pub fn highscores(request_fields: RequestFields, conferences: Vec<u8>, cli: Cli) {
+    let mute = cli.mute;
     let current_year: u16 = chrono::Utc::now().year() as u16;
     let subject = request_fields.subject;
     let individual_results = Arc::new(Mutex::new(Vec::new()));
@@ -314,10 +316,6 @@ pub fn highscores(request_fields: RequestFields, conferences: Vec<u8>, mute: boo
                     b_score.cmp(&a_score)
                 });
 
-                let top_indiv = indiv.first();
-                let top_indiv_score = top_indiv.unwrap().score;
-                indiv.retain(|a| a.score == top_indiv_score);
-
                 let year_str = year.to_string();
 
                 indiv.iter_mut().for_each(|indiv| {
@@ -333,10 +331,6 @@ pub fn highscores(request_fields: RequestFields, conferences: Vec<u8>, mute: boo
                     let b_score = b.score;
                     b_score.cmp(&a_score)
                 });
-
-                let top_team = team.first();
-                let top_team_score = top_team.unwrap().score;
-                team.retain(|a| a.score == top_team_score);
 
                 let year_str = year.to_string();
 
@@ -382,17 +376,17 @@ pub fn highscores(request_fields: RequestFields, conferences: Vec<u8>, mute: boo
         results.sort_by(|a, b| {
             let a_score = a.score;
             let b_score = b.score;
-            b_score.cmp(&a_score)
+            if a_score != b_score {
+                b_score.cmp(&a_score)
+            } else {
+                let a_year = &a.school[0..4];
+                let b_year = &b.school[0..4];
+
+                a_year.cmp(b_year)
+            }
         });
 
         let top_score = results.first().unwrap().score;
-
-        results.sort_by(|a, b| {
-            let a_year = &a.school[0..4];
-            let b_year = &b.school[0..4];
-
-            a_year.cmp(b_year)
-        });
 
         let mut longest_name_len = 0;
         let score_len = top_score.checked_ilog10().unwrap_or(0) as usize + 1;
@@ -401,7 +395,14 @@ pub fn highscores(request_fields: RequestFields, conferences: Vec<u8>, mute: boo
             longest_name_len = std::cmp::max(longest_name_len, indiv.name.len());
         });
 
-        for indiv in results.iter() {
+        let mut results_copy = results.clone();
+
+        let indiv_positions = cli.individual_positions.unwrap_or(10);
+        if indiv_positions != 0 {
+            results_copy.resize(std::cmp::max(indiv_positions, 1), Individual::default());
+        }
+
+        for indiv in results_copy.iter() {
             let conference_str: ColoredString = match indiv.conference {
                 1 => "1A".white(),
                 2 => "2A".yellow(),
@@ -421,6 +422,7 @@ pub fn highscores(request_fields: RequestFields, conferences: Vec<u8>, mute: boo
         }
         println!();
 
+        // NOTE: TODO
         if subject == Subject::Science {
             results.iter_mut().for_each(|indiv| {
                 indiv.score = indiv.get_biology().unwrap_or(-120);
@@ -454,18 +456,20 @@ pub fn highscores(request_fields: RequestFields, conferences: Vec<u8>, mute: boo
         results.sort_by(|a, b| {
             let a_score = a.score;
             let b_score = b.score;
-            b_score.cmp(&a_score)
+            if a_score != b_score {
+                b_score.cmp(&a_score)
+            } else {
+                let a_year = &a.school[0..4];
+                let b_year = &b.school[0..4];
+                a_year.cmp(b_year)
+            }
         });
 
         let top_score = results.first().unwrap().score;
-        results.retain(|team| team.score == top_score);
-
-        results.sort_by(|a, b| {
-            let a_year = &a.school[0..4];
-            let b_year = &b.school[0..4];
-
-            a_year.cmp(b_year)
-        });
+        let team_positions = cli.team_positions.unwrap_or(10);
+        if team_positions != 0 {
+            results.resize(std::cmp::max(team_positions, 1), Team::default());
+        }
 
         let mut longest_name_len = 0;
         let score_len = top_score.checked_ilog10().unwrap_or(0) as usize + 1;

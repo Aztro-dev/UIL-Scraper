@@ -37,7 +37,7 @@ fn main() {
     }
 
     let conferences =
-        RequestFields::parse_range(cli.conference.unwrap_or(String::from("16"))).unwrap();
+        RequestFields::parse_range(cli.conference.clone().unwrap_or(String::from("16"))).unwrap();
 
     if cli.command.is_none() {
         #[allow(unused_variables)]
@@ -50,7 +50,7 @@ fn main() {
             year,
         };
         if cli.highscores {
-            overall::highscores(fields, conferences.clone(), cli.mute);
+            overall::highscores(fields, conferences.clone(), cli);
             return;
         }
     }
