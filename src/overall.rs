@@ -37,38 +37,9 @@ pub fn rankings(
         if results.is_none() {
             continue;
         }
-        let (mut indiv, mut team) = results.unwrap();
+        let (indiv, team) = results.unwrap();
 
-        indiv.sort_by(|a, b| {
-            let a_score = a.score;
-            let b_score = b.score;
-            b_score.cmp(&a_score)
-        });
-        team.sort_by(|a, b| {
-            let a_score = a.score;
-            let b_score = b.score;
-            b_score.cmp(&a_score)
-        });
-
-        let mut indiv_points = Vec::new();
-        let mut team_points = Vec::new();
-
-        for (place, individual) in indiv.iter().enumerate() {
-            let position = place + 1;
-            let points = 5000.0 / (position as f32 + 4.0);
-            let mut individual_copy = individual.clone();
-            individual_copy.score = points as i16;
-            individual_copy.misc = IndividualMisc::Normal;
-            indiv_points.push(individual_copy);
-        }
-        for (place, team) in team.iter().enumerate() {
-            let position = place + 1;
-            let points = 5000.0 / (position as f32 + 4.0);
-            let mut team_copy = team.clone();
-            team_copy.score = points as i16;
-            team_copy.misc = TeamMisc::Normal;
-            team_points.push(team_copy);
-        }
+        let (indiv_points, team_points) = calculate_rankings(indiv, team, fields.subject);
 
         for indiv in indiv_points {
             let mut found = false;
@@ -106,6 +77,101 @@ pub fn rankings(
         }
     }
     Some((individual_results, team_results))
+}
+
+fn calculate_rankings(
+    mut indiv: Vec<Individual>,
+    mut team: Vec<Team>,
+    subject: Subject,
+) -> (Vec<Individual>, Vec<Team>) {
+    indiv.sort_by(|a, b| {
+        let a_score = a.score;
+        let b_score = b.score;
+        b_score.cmp(&a_score)
+    });
+    team.sort_by(|a, b| {
+        let a_score = a.score;
+        let b_score = b.score;
+        b_score.cmp(&a_score)
+    });
+
+    let mut indiv_points = Vec::new();
+    let mut team_points = Vec::new();
+
+    for (place, individual) in indiv.iter().enumerate() {
+        let position = place + 1;
+        let points = 5000.0 / (position as f32 + 4.0);
+        let mut individual_copy = individual.clone();
+        individual_copy.score = points as i16;
+        individual_copy.misc = IndividualMisc::Normal;
+        indiv_points.push(individual_copy);
+    }
+    for (place, team) in team.iter().enumerate() {
+        let position = place + 1;
+        let points = 5000.0 / (position as f32 + 4.0);
+        let mut team_copy = team.clone();
+        team_copy.score = points as i16;
+        team_copy.misc = TeamMisc::Normal;
+        team_points.push(team_copy);
+    }
+
+    if subject == Subject::Science {
+        indiv.sort_by(|a, b| {
+            let a_score = a.get_biology().unwrap_or(-120);
+            let b_score = b.get_biology().unwrap_or(-120);
+            b_score.cmp(&a_score)
+        });
+
+        for (place, individual) in indiv.iter().enumerate() {
+            if individual.score == -120 {
+                break;
+            }
+            let position = place + 1;
+            let points = 5000.0 / (position as f32 + 4.0) / 3.0;
+            let mut individual_copy = individual.clone();
+            individual_copy.score = points as i16;
+            individual_copy.misc = IndividualMisc::Normal;
+            indiv_points.push(individual_copy);
+        }
+
+        indiv.sort_by(|a, b| {
+            let a_score = a.get_chemistry().unwrap_or(-120);
+            let b_score = b.get_chemistry().unwrap_or(-120);
+            b_score.cmp(&a_score)
+        });
+
+        for (place, individual) in indiv.iter().enumerate() {
+            if individual.score == -120 {
+                break;
+            }
+            let position = place + 1;
+            let points = 5000.0 / (position as f32 + 4.0) / 3.0;
+            let mut individual_copy = individual.clone();
+            individual_copy.score = points as i16;
+            individual_copy.misc = IndividualMisc::Normal;
+            indiv_points.push(individual_copy);
+        }
+
+        indiv.sort_by(|a, b| {
+            let a_score = a.get_physics().unwrap_or(-120);
+            let b_score = b.get_physics().unwrap_or(-120);
+            b_score.cmp(&a_score)
+        });
+
+        for (place, individual) in indiv.iter().enumerate() {
+            if individual.score == -120 {
+                break;
+            }
+            let position = place + 1;
+            let points = 5000.0 / (position as f32 + 4.0) / 3.0;
+            let mut individual_copy = individual.clone();
+            individual_copy.score = points as i16;
+            individual_copy.misc = IndividualMisc::Normal;
+            indiv_points.push(individual_copy);
+        }
+    }
+
+    (indiv_points, team_points)
 }
 
 pub fn sweepstakes(
