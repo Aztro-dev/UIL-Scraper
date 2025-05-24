@@ -127,7 +127,7 @@ fn calculate_rankings(
                 break;
             }
             let position = place + 1;
-            let points = 5000.0 / (position as f32 + 4.0) / 3.0;
+            let points = 1000.0 / (position as f32 + 4.0);
             let mut individual_copy = individual.clone();
             individual_copy.score = points as i16;
             individual_copy.misc = IndividualMisc::Normal;
@@ -145,7 +145,7 @@ fn calculate_rankings(
                 break;
             }
             let position = place + 1;
-            let points = 5000.0 / (position as f32 + 4.0) / 3.0;
+            let points = 1000.0 / (position as f32 + 4.0);
             let mut individual_copy = individual.clone();
             individual_copy.score = points as i16;
             individual_copy.misc = IndividualMisc::Normal;
@@ -163,7 +163,7 @@ fn calculate_rankings(
                 break;
             }
             let position = place + 1;
-            let points = 5000.0 / (position as f32 + 4.0) / 3.0;
+            let points = 1000.0 / (position as f32 + 4.0);
             let mut individual_copy = individual.clone();
             individual_copy.score = points as i16;
             individual_copy.misc = IndividualMisc::Normal;
