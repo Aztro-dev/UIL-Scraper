@@ -162,8 +162,8 @@ impl Individual {
                 _ => &cells[score_index],
             }
             .trim()
-            .parse::<i16>()
-            .unwrap_or(0);
+            .parse::<f32>()
+            .unwrap_or(0.0) as i16;
 
             let points = cells[points_index].parse::<f32>().unwrap_or(0.0);
 
@@ -176,9 +176,9 @@ impl Individual {
             let misc: IndividualMisc = if fields.year > 2022 {
                 match fields.clone().subject {
                     Subject::Science => IndividualMisc::Science {
-                        biology: cells[4].parse::<i16>().unwrap_or(0),
-                        chemistry: cells[5].parse::<i16>().unwrap_or(0),
-                        physics: cells[6].parse::<i16>().unwrap_or(0),
+                        biology: cells[4].parse::<f32>().unwrap_or(0.0) as i16,
+                        chemistry: cells[5].parse::<f32>().unwrap_or(0.0) as i16,
+                        physics: cells[6].parse::<f32>().unwrap_or(0.0) as i16,
                     },
                     _ => IndividualMisc::Normal {},
                 }
