@@ -1,5 +1,6 @@
 use advance::{AdvanceTypeIndividual, AdvanceTypeTeam};
 use chrono::Datelike;
+use std::collections::HashMap;
 
 use colored::Colorize;
 
@@ -136,22 +137,40 @@ fn main() {
             }
         }
 
+        let mut advancing_individuals = HashMap::new();
         for indiv in individual_results.iter_mut() {
             let advance = indiv.advance.clone();
+            let team = team_results
+                .iter()
+                .find(|&team| team.school == indiv.school.clone());
+
+            if team.is_none(){
+                continue;
+            }
+            let team = team.unwrap();
+
+
+            let team_advance = &team.clone().advance;
+            if team_advance.is_none() {
+                continue;
+            }
+            let team_advance = team_advance.clone().unwrap();
+
+            if let Some(count) = advancing_individuals.get(&team.school){
+                if *count >= 4{
+                    continue;
+                }
+
+                advancing_individuals.insert(team.school.clone(), *count + 1);
+            }else{
+                advancing_individuals.insert(team.school.clone(), 1);
+            }
+
             if advance.is_some() {
                 continue;
             }
 
-            let team = team_results
-                .iter()
-                .find(|&team| team.school == indiv.school.clone());
-            let team_advance = team.cloned().unwrap_or_default().advance;
-            if team_advance.is_none() {
-                continue;
-            }
-            let team_advance = team_advance.unwrap();
-
-            if team_advance == AdvanceTypeTeam::Advance && advance.is_none() {
+            if team_advance == AdvanceTypeTeam::Advance {
                 indiv.advance = Some(AdvanceTypeIndividual::Team);
             } else {
                 indiv.advance = Some(AdvanceTypeIndividual::Wild);
