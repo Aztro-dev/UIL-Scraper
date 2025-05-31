@@ -135,12 +135,14 @@ impl Team {
             let district = fields.district;
             let region = fields.region;
             let score = match fields.clone().subject {
-                Subject::ComputerScience => &cells[if fields.year > 2022 { 3 } else { score_index }],
+                Subject::ComputerScience => {
+                    &cells[if fields.year > 2022 { 3 } else { score_index }]
+                }
                 _ => &cells[score_index],
-            }.trim()
+            }
+            .trim()
             .parse::<f32>()
-            .unwrap_or(0.0)
-            as i16;
+            .unwrap_or(0.0) as i16;
 
             let points = cells[points_index].parse::<f32>().unwrap_or(0.0);
 

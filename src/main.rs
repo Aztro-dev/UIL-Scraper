@@ -144,11 +144,10 @@ fn main() {
                 .iter()
                 .find(|&team| team.school == indiv.school.clone());
 
-            if team.is_none(){
+            if team.is_none() {
                 continue;
             }
             let team = team.unwrap();
-
 
             let team_advance = &team.clone().advance;
             if team_advance.is_none() {
@@ -156,13 +155,13 @@ fn main() {
             }
             let team_advance = team_advance.clone().unwrap();
 
-            if let Some(count) = advancing_individuals.get(&team.school){
-                if *count >= 4{
+            if let Some(count) = advancing_individuals.get(&team.school) {
+                if *count >= 4 {
                     continue;
                 }
 
                 advancing_individuals.insert(team.school.clone(), *count + 1);
-            }else{
+            } else {
                 advancing_individuals.insert(team.school.clone(), 1);
             }
 
