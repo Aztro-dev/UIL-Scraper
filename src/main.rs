@@ -1,4 +1,5 @@
 use advance::{AdvanceTypeIndividual, AdvanceTypeTeam};
+use std::time::{Duration, Instant};
 use chrono::Datelike;
 use std::collections::HashMap;
 
@@ -26,6 +27,7 @@ mod overall;
 use clap::Parser;
 
 fn main() {
+    let start = Instant::now();
     let mut cli = Cli::parse();
 
     let subject = Subject::from_str(&cli.subject).unwrap();
@@ -251,6 +253,8 @@ fn main() {
             &cli.find,
         );
     }
+
+    println!("Time elapsed: {:?}", start.elapsed());
 }
 
 pub fn find_level(cli: &mut Cli) {
