@@ -1,7 +1,7 @@
 use advance::{AdvanceTypeIndividual, AdvanceTypeTeam};
-use std::time::{Duration, Instant};
 use chrono::Datelike;
 use std::collections::HashMap;
+use std::time::Instant;
 
 use colored::Colorize;
 
