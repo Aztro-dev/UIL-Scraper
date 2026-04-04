@@ -8,6 +8,7 @@ use crate::{
     cli::Cli,
     individual::IndividualMisc,
     overall,
+    progress,
     request::{RequestFields, Subject},
     scrape::scrape_subject,
     team::{Team, TeamMisc},
@@ -31,6 +32,9 @@ pub fn rankings(
     let mut individual_results: Vec<Individual> = Vec::new();
     let mut team_results: Vec<Team> = Vec::new();
     for subject in supported_subjects {
+        if progress::is_cancelled() {
+            break;
+        }
         let mut fields = request_fields.clone();
         fields.subject = subject;
         let results = scrape_subject(fields.clone(), conferences.clone(), mute);
@@ -67,10 +71,19 @@ pub fn rankings(
             }
         }
 
+        if progress::is_cancelled() {
+            break;
+        }
+        if progress::is_cancelled() {
+            break;
+        }
         if fields.district.is_some() {
             use std::{thread, time};
 
-            println!("Pausing to (hopefully) prevent rate limiting");
+            progress::set_message("Pausing briefly to avoid rate limiting...");
+            if !mute {
+                println!("Pausing to (hopefully) prevent rate limiting");
+            }
             let second = time::Duration::from_millis(500);
 
             thread::sleep(second);
@@ -194,6 +207,9 @@ pub fn sweepstakes(
     let mut individual_results: Vec<Individual> = Vec::new();
     let mut team_results: Vec<Team> = Vec::new();
     for subject in supported_subjects {
+        if progress::is_cancelled() {
+            break;
+        }
         if subject == Subject::ComputerApplications && request_fields.year > 2024 {
             // Computer Apps is discontinued
             continue;
@@ -295,28 +311,31 @@ pub fn sweepstakes(
             }
         }
 
+        if progress::is_cancelled() {
+            break;
+        }
         if fields.district.is_some() {
             use std::{thread, time};
 
-            println!("Pausing to (hopefully) prevent rate limiting");
+            progress::set_message("Pausing briefly to avoid rate limiting...");
+            if !mute {
+                println!("Pausing to (hopefully) prevent rate limiting");
+            }
             let second = time::Duration::from_millis(500);
 
             thread::sleep(second);
         }
     }
-    for (index, indiv) in individual_results.iter().enumerate() {
-        if index > 25 {
-            break;
-        }
-        println!("{}: {} points", indiv.name.clone(), indiv.points);
-    }
     Some((individual_results, team_results))
 }
 
-pub fn highscores(request_fields: RequestFields, conferences: Vec<u8>, cli: Cli) {
-    let mute = cli.mute;
+pub fn highscores_data(
+    request_fields: RequestFields,
+    conferences: Vec<u8>,
+    mute: bool,
+) -> Option<(Vec<Individual>, Vec<Team>)> {
     let current_year: u16 = chrono::Utc::now().year() as u16;
-    let subject = request_fields.subject;
+    let subject = request_fields.subject.clone();
     let individual_results = Arc::new(Mutex::new(Vec::new()));
     let team_results = Arc::new(Mutex::new(Vec::new()));
 
@@ -326,18 +345,18 @@ pub fn highscores(request_fields: RequestFields, conferences: Vec<u8>, cli: Cli)
         2004
     };
 
-    let range = match subject {
-        // The UIL CS test changed scales between region 2004 and state 2004
+    let range = match subject.clone() {
         Subject::ComputerScience => cs_year..=current_year,
         Subject::ComputerApplications => 2004..=2024,
         _ => 2004..=current_year,
     };
 
-    // Used to stop rate limiting more efficiently
     let mut count = 0;
 
-    // Can't go in parallel because you get giga rate-limited
     for year in range {
+        if progress::is_cancelled() {
+            break;
+        }
         let fields = RequestFields {
             district: request_fields.district,
             region: request_fields.region,
@@ -362,19 +381,17 @@ pub fn highscores(request_fields: RequestFields, conferences: Vec<u8>, cli: Cli)
             } else {
                 1
             }
-            * match subject {
+            * match subject.clone() {
                 Subject::Rankings => 8,
                 _ => 1,
             };
 
-        let results = match subject {
+        let results = match subject.clone() {
             Subject::Rankings => overall::rankings(fields.clone(), conferences.clone(), mute),
             _ => scrape_subject(fields.clone(), conferences.clone(), mute),
         };
 
-        if results.is_some() {
-            let (mut indiv, mut team) = results.unwrap();
-
+        if let Some((mut indiv, mut team)) = results {
             if !indiv.is_empty() {
                 indiv.sort_by(|a, b| {
                     let a_score = a.score;
@@ -383,12 +400,10 @@ pub fn highscores(request_fields: RequestFields, conferences: Vec<u8>, cli: Cli)
                 });
 
                 let year_str = year.to_string();
-
                 indiv.iter_mut().for_each(|indiv| {
                     indiv.school = format!("{year_str} - {}", indiv.school);
                 });
-
-                individual_results.lock().unwrap().append(&mut indiv);
+                individual_results.lock().ok()?.append(&mut indiv);
             }
 
             if !team.is_empty() {
@@ -399,47 +414,61 @@ pub fn highscores(request_fields: RequestFields, conferences: Vec<u8>, cli: Cli)
                 });
 
                 let year_str = year.to_string();
-
                 team.iter_mut().for_each(|team| {
                     team.school = format!("{year_str} - {}", team.school);
                 });
-
-                team_results.lock().unwrap().append(&mut team);
+                team_results.lock().ok()?.append(&mut team);
             }
         }
 
+        if progress::is_cancelled() {
+            break;
+        }
         if count <= 20 {
             continue;
         }
         count = 0;
         if request_fields.region.is_some() {
             use std::{thread, time};
-
-            println!("Pausing to (hopefully) prevent rate limiting");
-            let second = time::Duration::from_millis(1000);
-
-            thread::sleep(second);
+            progress::set_message("Pausing briefly to avoid rate limiting...");
+            if !mute {
+                println!("Pausing to (hopefully) prevent rate limiting");
+            }
+            thread::sleep(time::Duration::from_millis(1000));
         } else if request_fields.district.is_some() {
             use std::{thread, time};
-
-            println!("Pausing to (hopefully) prevent rate limiting");
-            let second = time::Duration::from_millis(2000);
-
-            thread::sleep(second);
+            progress::set_message("Pausing briefly to avoid rate limiting...");
+            if !mute {
+                println!("Pausing to (hopefully) prevent rate limiting");
+            }
+            thread::sleep(time::Duration::from_millis(2000));
         } else {
             use std::{thread, time};
-
-            println!("Pausing to (hopefully) prevent rate limiting");
-            let second = time::Duration::from_millis(1000);
-
-            thread::sleep(second);
+            progress::set_message("Pausing briefly to avoid rate limiting...");
+            if !mute {
+                println!("Pausing to (hopefully) prevent rate limiting");
+            }
+            thread::sleep(time::Duration::from_millis(1000));
         }
     }
+
+    let individual_results = individual_results.lock().ok()?.to_vec();
+    let team_results = team_results.lock().ok()?.to_vec();
+    Some((individual_results, team_results))
+}
+
+pub fn highscores(request_fields: RequestFields, conferences: Vec<u8>, cli: Cli) {
+    let subject = request_fields.subject.clone();
+    let Some((mut individual_results, mut team_results)) =
+        highscores_data(request_fields, conferences, cli.mute)
+    else {
+        println!("No results found");
+        return;
+    };
+
     println!("{} Individual Results: ", subject.to_string());
     {
-        let mut results = individual_results.lock().unwrap();
-
-        results.sort_by(|a, b| {
+        individual_results.sort_by(|a, b| {
             let a_score = a.score;
             let b_score = b.score;
             if a_score != b_score {
@@ -447,54 +476,26 @@ pub fn highscores(request_fields: RequestFields, conferences: Vec<u8>, cli: Cli)
             } else {
                 let a_year = &a.school[0..4];
                 let b_year = &b.school[0..4];
-
                 a_year.cmp(b_year)
             }
         });
 
-        let top_score = results.first().unwrap().score;
+        if !individual_results.is_empty() {
+            let top_score = individual_results.first().unwrap().score;
+            let mut longest_name_len = 0;
+            let score_len = top_score.checked_ilog10().unwrap_or(0) as usize + 1;
 
-        let mut longest_name_len = 0;
-        let score_len = top_score.checked_ilog10().unwrap_or(0) as usize + 1;
-
-        results.iter().for_each(|indiv| {
-            longest_name_len = std::cmp::max(longest_name_len, indiv.name.len());
-        });
-
-        let mut results_copy = results.clone();
-
-        let indiv_positions = cli.individual_positions.unwrap_or(10);
-        if indiv_positions != 0 {
-            results_copy.resize(std::cmp::max(indiv_positions, 1), Individual::default());
-        }
-
-        for indiv in results_copy.iter() {
-            let conference_str: ColoredString = match indiv.conference {
-                1 => "1A".white(),
-                2 => "2A".yellow(),
-                3 => "3A".bright_blue(),
-                4 => "4A".green(),
-                5 => "5A".red(),
-                6 => "6A".magenta(),
-                _ => "".into(),
-            };
-            let base: ColoredString = format!(
-                "{:longest_name_len$} => {:>score_len$} ({conference_str} {})",
-                indiv.name, indiv.score, indiv.school,
-            )
-            .into();
-
-            println!("{base}");
-        }
-        println!();
-
-        // NOTE: TODO
-        if subject == Subject::Science {
-            results.iter_mut().for_each(|indiv| {
-                indiv.score = indiv.get_biology().unwrap_or(-120);
+            individual_results.iter().for_each(|indiv| {
+                longest_name_len = std::cmp::max(longest_name_len, indiv.name.len());
             });
-            results.sort_by(|a, b| a.score.cmp(&b.score));
-            for indiv in results.iter() {
+
+            let mut results_copy = individual_results.clone();
+            let indiv_positions = cli.individual_positions.unwrap_or(10);
+            if indiv_positions != 0 {
+                results_copy.resize(std::cmp::max(indiv_positions, 1), Individual::default());
+            }
+
+            for indiv in results_copy.iter() {
                 let conference_str: ColoredString = match indiv.conference {
                     1 => "1A".white(),
                     2 => "2A".yellow(),
@@ -509,17 +510,39 @@ pub fn highscores(request_fields: RequestFields, conferences: Vec<u8>, cli: Cli)
                     indiv.name, indiv.score, indiv.school,
                 )
                 .into();
-
                 println!("{base}");
+            }
+            println!();
+
+            if subject == Subject::Science {
+                individual_results.iter_mut().for_each(|indiv| {
+                    indiv.score = indiv.get_biology().unwrap_or(-120);
+                });
+                individual_results.sort_by(|a, b| a.score.cmp(&b.score));
+                for indiv in individual_results.iter() {
+                    let conference_str: ColoredString = match indiv.conference {
+                        1 => "1A".white(),
+                        2 => "2A".yellow(),
+                        3 => "3A".bright_blue(),
+                        4 => "4A".green(),
+                        5 => "5A".red(),
+                        6 => "6A".magenta(),
+                        _ => "".into(),
+                    };
+                    let base: ColoredString = format!(
+                        "{:longest_name_len$} => {:>score_len$} ({conference_str} {})",
+                        indiv.name, indiv.score, indiv.school,
+                    )
+                    .into();
+                    println!("{base}");
+                }
             }
         }
     }
 
     println!("{} Team Results: ", subject.to_string());
     {
-        let mut results = team_results.lock().unwrap();
-
-        results.sort_by(|a, b| {
+        team_results.sort_by(|a, b| {
             let a_score = a.score;
             let b_score = b.score;
             if a_score != b_score {
@@ -531,38 +554,41 @@ pub fn highscores(request_fields: RequestFields, conferences: Vec<u8>, cli: Cli)
             }
         });
 
-        let top_score = results.first().unwrap().score;
-        let team_positions = cli.team_positions.unwrap_or(10);
-        if team_positions != 0 {
-            results.resize(std::cmp::max(team_positions, 1), Team::default());
-        }
+        if !team_results.is_empty() {
+            let top_score = team_results.first().unwrap().score;
+            let team_positions = cli.team_positions.unwrap_or(10);
+            if team_positions != 0 {
+                team_results.resize(std::cmp::max(team_positions, 1), Team::default());
+            }
 
-        let mut longest_name_len = 0;
-        let score_len = top_score.checked_ilog10().unwrap_or(0) as usize + 1;
+            let mut longest_name_len = 0;
+            let score_len = top_score.checked_ilog10().unwrap_or(0) as usize + 1;
+            team_results.iter().for_each(|team| {
+                if team.school.len() >= 7 {
+                    longest_name_len = std::cmp::max(longest_name_len, team.school[7..].len());
+                }
+            });
 
-        results.iter().for_each(|team| {
-            longest_name_len = std::cmp::max(longest_name_len, team.school[7..].len());
-        });
-
-        for team in results.iter() {
-            let conference_str: ColoredString = match team.conference {
-                1 => "1A".white(),
-                2 => "2A".yellow(),
-                3 => "3A".bright_blue(),
-                4 => "4A".green(),
-                5 => "5A".red(),
-                6 => "6A".magenta(),
-                _ => "".into(),
-            };
-            let base: ColoredString = format!(
-                "{:longest_name_len$} => {:>score_len$} ({conference_str} {})",
-                &team.school[7..],
-                team.score,
-                &team.school[0..4],
-            )
-            .into();
-
-            println!("{base}");
+            for team in team_results.iter() {
+                let conference_str: ColoredString = match team.conference {
+                    1 => "1A".white(),
+                    2 => "2A".yellow(),
+                    3 => "3A".bright_blue(),
+                    4 => "4A".green(),
+                    5 => "5A".red(),
+                    6 => "6A".magenta(),
+                    _ => "".into(),
+                };
+                let school_name = if team.school.len() >= 7 { &team.school[7..] } else { &team.school };
+                let base: ColoredString = format!(
+                    "{:longest_name_len$} => {:>score_len$} ({conference_str} {})",
+                    school_name,
+                    team.score,
+                    team.school,
+                )
+                .into();
+                println!("{base}");
+            }
         }
     }
 }

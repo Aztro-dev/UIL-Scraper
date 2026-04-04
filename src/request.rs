@@ -2,7 +2,7 @@ use colored::Colorize;
 use minreq::Response;
 use scraper::{Html, Selector};
 
-use crate::{individual::Individual, team::Team};
+use crate::{individual::Individual, progress, team::Team};
 
 #[derive(Clone, Debug)]
 pub struct RequestFields {
@@ -21,11 +21,23 @@ impl RequestFields {
         }
         string = string.to_lowercase();
         if string.contains(',') {
-            let mut split = string.split(',');
-            let left_num = split.next().unwrap().parse::<u8>().ok()?;
-            let right_num = split.next().unwrap().parse::<u8>().ok()?;
-            let vec = vec![left_num, right_num];
-            return Some(vec);
+            let parts: Vec<u8> = string
+                .split(',')
+                .map(|part| part.chars().filter(|c| c.is_ascii_digit()).collect::<String>())
+                .filter(|part| !part.is_empty())
+                .map(|part| part.parse::<u8>())
+                .collect::<Result<Vec<_>, _>>()
+                .ok()?;
+
+            if parts.len() != 2 {
+                return None;
+            }
+
+            if parts.iter().any(|conference| !(1..=6).contains(conference)) {
+                return None;
+            }
+
+            return Some(parts);
         }
         string.retain(|c| c.is_ascii_digit());
         let bytes = string.as_bytes();
@@ -83,6 +95,9 @@ impl RequestFields {
 }
 
 pub fn request(fields: RequestFields) -> Option<String> {
+    if progress::is_cancelled() {
+        return None;
+    }
     let district = fields.get_district();
     let region = fields.get_region();
     let state = fields.get_state();
@@ -114,6 +129,9 @@ pub fn request(fields: RequestFields) -> Option<String> {
 }
 
 pub fn perform_scrape(fields: RequestFields) -> Option<(Vec<Individual>, Vec<Team>)> {
+    if progress::is_cancelled() {
+        return None;
+    }
     let mut individual_results: Vec<Individual> = Vec::new();
     let mut team_results: Vec<Team> = Vec::new();
 

@@ -1,7 +1,7 @@
 use clap::Parser;
 use clap::Subcommand;
 
-#[derive(Parser)]
+#[derive(Parser, Clone, Debug)]
 #[command(version, about, long_about = None)]
 pub struct Cli {
     /// Subject to find
@@ -32,12 +32,12 @@ pub struct Cli {
     pub find: Option<String>,
 
     /// Describes how many positions to show for the individual results
-    /// Defaults to 25, with 0 being all teams
+    /// Defaults to 0, which shows all positions
     #[arg(short, long, value_name = "INDIVIDUAL POSITIONS")]
     pub individual_positions: Option<usize>,
 
     /// Describes how many positions to show for the team results
-    /// Defaults to 25, with 0 being all teams
+    /// Defaults to 0, which shows all positions
     #[arg(short, long, value_name = "TEAM POSITIONS")]
     pub team_positions: Option<usize>,
 
@@ -53,7 +53,7 @@ pub struct Cli {
     pub command: Option<Commands>,
 }
 
-#[derive(Subcommand, Clone)]
+#[derive(Subcommand, Clone, Debug)]
 pub enum Commands {
     Compare {
         /// Compares two individuals in a subject
