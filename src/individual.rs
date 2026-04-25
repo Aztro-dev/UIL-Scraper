@@ -431,7 +431,27 @@ impl Individual {
                     "{base} ({conference_str} D{district:<2} {region_str} - {advance_str} - {school})"
                 );
             } else if let Some(region) = individual.region {
-                println!("{base} ({conference_str} R{region} - {advance_str} - {school})");
+                let mut region_str: ColoredString = match region {
+                    1 => "R1".red(),
+                    2 => "R2".yellow(),
+                    3 => "R3".green(),
+                    4 => "R4".blue(),
+                    _ => "".into(),
+                };
+
+                match support {
+                    Some(support) => {
+                        if !support.has_basic {
+                            region_str.fgcolor = None;
+                            region_str.bgcolor = None;
+                        }
+                    }
+                    _ => {
+                        region_str.fgcolor = None;
+                        region_str.bgcolor = None;
+                    }
+                };
+                println!("{base} ({conference_str} {region_str} - {advance_str} - {school})");
             } else {
                 println!("{base} ({conference_str} - {school})");
             }

@@ -381,7 +381,27 @@ impl Team {
                     "{base} {conference_str} - District {district:<2} {region_str} {advance_status}"
                 );
             } else if let Some(region) = team.region {
-                println!("{base} {conference_str} - Region {region} {advance_status}");
+                let mut region_str: ColoredString = match region {
+                    1 => "Region 1".red(),
+                    2 => "Region 2".yellow(),
+                    3 => "Region 3".green(),
+                    4 => "Region 4".blue(),
+                    _ => "".into(),
+                };
+
+                match support {
+                    Some(support) => {
+                        if !support.has_basic {
+                            region_str.fgcolor = None;
+                            region_str.bgcolor = None;
+                        }
+                    }
+                    _ => {
+                        region_str.fgcolor = None;
+                        region_str.bgcolor = None;
+                    }
+                }
+                println!("{base} {conference_str} - {region_str} {advance_status}");
             } else {
                 println!("{base} {conference_str}");
             }
