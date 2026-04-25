@@ -21,7 +21,7 @@ pub fn scrape_subject(
     let individual_results = Arc::new(Mutex::new(Vec::new()));
     let team_results = Arc::new(Mutex::new(Vec::new()));
 
-    let mut fields = RequestFields {
+    let fields = RequestFields {
         district,
         region,
         state,
@@ -34,7 +34,6 @@ pub fn scrape_subject(
 
     if district.is_some() && district.unwrap() == 0 {
         for conference in conferences.clone() {
-            fields.conference = conference;
             let range = match region {
                 Some(0) => 1..=32,
                 Some(region) => (region * 8 - 7)..=(region * 8),
