@@ -304,12 +304,6 @@ pub fn sweepstakes(
             thread::sleep(second);
         }
     }
-    for (index, indiv) in individual_results.iter().enumerate() {
-        if index > 25 {
-            break;
-        }
-        println!("{}: {} points", indiv.name.clone(), indiv.points);
-    }
     Some((individual_results, team_results))
 }
 
