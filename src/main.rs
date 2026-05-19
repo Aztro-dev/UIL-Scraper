@@ -30,7 +30,8 @@ fn main() {
     let start = Instant::now();
     let mut cli = Cli::parse();
 
-    let subject = Subject::from_str(&cli.subject).unwrap();
+    let subject = Subject::from_str(&cli.subject)
+        .expect("Subject provided does not match list of available subjects. Try running the command again with the --help flag");
     let year = cli
         .year
         .unwrap_or(chrono::Utc::now().year().try_into().unwrap());
